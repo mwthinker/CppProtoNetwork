@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package message;
+
+enum EnumAllowingAlias {
+  UNKNOWN = 0;
+  STARTED = 1;
+  RUNNING = 2;
+}
+
+message Wrapper {
+	string text = 1;
+    repeated int32 id = 2;
+	EnumAllowingAlias alias = 3;
+}
