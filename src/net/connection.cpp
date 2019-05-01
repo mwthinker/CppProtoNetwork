@@ -6,99 +6,104 @@
 
 namespace net {
 
-	Connection::Connection(asio::ip::tcp::socket socket) : socket_(std::move(socket)), receivedSize_(0) {
+	namespace {
+		
+		constexpr int MAX_SIZE = 1024;
+
+		const ConnectionErrorCategory connectionErrorCategory{};		
+		
+	}
+
+	const char* ConnectionErrorCategory::name() const noexcept
+	{
+		return "connection";
+	}
+
+	std::string ConnectionErrorCategory::message(int ev) const
+	{
+		switch (ev) {
+			case Error::MESSAGE_MAX_SIZE:
+				return "received message to big";
+			case Error::PROTOBUF_PROTOCOL_ERROR:
+				return "protobuf protocol error";
+			default:
+				return "(unrecognized error)";
+		}
+	}
+
+	std::error_code make_error_code(Error e)
+	{
+		return {static_cast<int>(e), connectionErrorCategory};
+	}
+
+	Connection::Connection(asio::ip::tcp::socket socket) : socket_(std::move(socket)) {
 	}
 
 	Connection::~Connection() {
-		socket_.close();
+		disconnect(make_error_code(Error::NO));
 	}
 
 	void Connection::send(const google::protobuf::MessageLite& message) {
-		mutex_.lock();
-		//sendBuffer_.emplace_back(message);
-		mutex_.unlock();
-		auto& packet = sendBuffer_.back();
-		asio::async_write(socket_, asio::buffer(packet.getData(), packet.getSize()),
-			asio::transfer_exactly(packet.getSize()),
-			[this](std::error_code ec, std::size_t length) {
+		ProtobufMessage protobufMessage;
+		sendBuffer_.acquire(protobufMessage);
+		protobufMessage.setBuffer(message);
+
+		const char* data = protobufMessage.getData();
+		size_t size = protobufMessage.getSize();
+		asio::async_write(socket_, asio::buffer(data, size), asio::transfer_exactly(size),
+			[this, pb = std::move(protobufMessage)] (std::error_code ec, std::size_t length) mutable {
 			
-			mutex_.lock();
-			//sendBuffer_.pop_front();
-			mutex_.unlock();
-			
-			if (ec) {
-				std::cout << "Connection::send:" << ec.message() << std::endl;
-				disconnect();
+			if (pb.getBodySize() > MAX_SIZE) {
+				disconnect(make_error_code(Error::MESSAGE_MAX_SIZE));
+			} else if (ec) {
+				disconnect(ec);
 			}
+
+			sendBuffer_.release(std::move(pb));
 		});
-	}
-
-	void Connection::sendHeader(const google::protobuf::MessageLite& message) {
-		ProtobufMessage& protobufMessage = sendBuffer_.front();
-
-		//ProtobufMessage& protobufMessage = sendBuffer_.push(message);
-
-		asio::async_write(socket_, asio::buffer(protobufMessage.getData(), protobufMessage.getSize()),
-			asio::transfer_exactly(protobufMessage.getSize()),
-			[this, pb = std::move(protobufMessage)](std::error_code ec, std::size_t length) {
-			
-			//sendBuffer_.pop_front();
-			
-			if (ec) {
-				std::cout << "Connection::send:" << ec.message() << std::endl;
-				disconnect();
-			}
-		});
-		sendBuffer_.pop();
-	}
-
-	void Connection::sendBody(net::ProtobufMessage&& protobufMessage) {
-
 	}
 
 	void Connection::readHeader() {
-		receiveBuffer_.clear();
-		
+		receiveMessage_.reserveHeaderSize();
 		asio::async_read(socket_,
-			asio::buffer(&receivedSize_, sizeof(receivedSize_)),			
-			asio::transfer_exactly(receiveBuffer_.getSize()),
-			[this](std::error_code ec, std::size_t size) {
+			asio::buffer(receiveMessage_.getData(), receiveMessage_.getHeaderSize()),
+			asio::transfer_exactly(receiveMessage_.getHeaderSize()),
+			[this] (std::error_code ec, std::size_t size) {
 
-			receivedSize_ = asio::detail::socket_ops::network_to_host_short(receivedSize_);
-			receivedSize_ = asio::detail::socket_ops::host_to_network_short(receivedSize_);
-			static_assert(sizeof(asio::detail::u_short_type) == sizeof(receivedSize_));
-
-			if (!ec) {
-				readBody();
+			if (receiveMessage_.getBodySize() > MAX_SIZE) {
+				disconnect(make_error_code(Error::MESSAGE_MAX_SIZE));
+			} else if (ec) {
+				disconnect(ec);
 			} else {
-				std::cout << "Connection::readHeader:" << ec.message() << std::endl;
-				disconnect();
+				readBody();
 			}
 		});
 	}
 
 	void Connection::readBody() {
-		receiveBuffer_.reserveBodySize();
+		receiveMessage_.reserveBodySize();
 		asio::async_read(socket_,
-			asio::buffer(receiveBuffer_.getBodyData(), receiveBuffer_.getBodySize()),
-			asio::transfer_exactly(receiveBuffer_.getBodySize()),
+			asio::buffer(receiveMessage_.getBodyData(), receiveMessage_.getBodySize()),
+			asio::transfer_exactly(receiveMessage_.getBodySize()),
 			[this](std::error_code ec, std::size_t length) {
-			if (!ec) {
-				if (receiveHandler_) {
-					receiveHandler_(receiveBuffer_);
-				}
-				readHeader();
+
+			if (ec) {
+				disconnect(ec);
 			} else {
-				std::cout << "Connection::readBody:" << ec.message() << std::endl;
-				disconnect();
+				if (receiveHandler_ && receiveHandler_(receiveMessage_, make_error_code(Error::NO))) {
+					readHeader();
+				} else {
+					disconnect(ec);
+				}
 			}
 		});
 	}
 
-	void Connection::disconnect() {
+	void Connection::disconnect(std::error_code ec) {
 		socket_.close();
+
 		if (disconnectHandler_) {
-			disconnectHandler_();
+			disconnectHandler_(ec);
 		}
 	}
 

@@ -13,6 +13,7 @@
 #include <mutex>
 #include <thread>
 #include <memory>
+#include <atomic>
 
 namespace net {
 
@@ -56,8 +57,8 @@ namespace net {
 		std::vector<RemoteClientPtr> clients_;
 		std::thread thread_;
 		bool closeConnection_;
-		std::mutex mutex_;
 		int port_;
+		std::atomic<bool> allowConnections_;
 	};
 
 } // Namespace net.

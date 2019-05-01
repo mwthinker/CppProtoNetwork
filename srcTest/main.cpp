@@ -8,27 +8,75 @@
 #include <iostream>
 #include <functional>
 #include <mutex>
-#include <condition_variable>
+#include <atomic>
+#include <chrono>
+#include <string>
 
 using namespace std::literals::chrono_literals;
 using namespace net;
+using namespace std::chrono_literals;
+
+class TaskQueue {
+public:
+	using Task = std::function<void()>;
+
+	void excecute() {
+		std::lock_guard<std::mutex> lock(mutex_);
+		while (!tasks_.empty()) {
+			auto& task = tasks_.front();
+			task();
+			tasks_.pop();
+		}
+	}
+
+	void push(const Task& item) {
+		std::lock_guard<std::mutex> lock(mutex_);
+		tasks_.push(std::move(item));
+	}
+
+	void push(Task&& item) {
+		std::lock_guard<std::mutex> lock(mutex_);
+		tasks_.push(std::move(item));
+	}
+
+	void clear() {
+		std::lock_guard<std::mutex> lock(mutex_);
+		while (!tasks_.empty()) {
+			tasks_.pop();
+		}
+	}
+
+	std::mutex mutex_;
+	std::queue<Task> tasks_;
+};
 
 void runServer() {
 	std::cout << "Start server\n";
 	auto server = Server::create();
 	server->connect(5012);
 
+	TaskQueue taskQueue;
+
 	server->setConnectHandler([&](const RemoteClientPtr& remoteClientPtr) {
 		std::cout << "New Connection\n";	
 
-		remoteClientPtr->setReceiveHandler<message::Wrapper>([](const message::Wrapper& wrapper) {
+		remoteClientPtr->setReceiveHandler<message::Wrapper>([&](const message::Wrapper& wrapper, std::error_code ec) {
+			taskQueue.push([]() {				
+			});
 			std::cout << wrapper.text() << "\n";
+			return true;
 		});
 
-		remoteClientPtr->setDisconnectHandler([]() {
+		remoteClientPtr->setDisconnectHandler([](std::error_code ec) {
 			std::cout << "Disconnected\n";
 		});
 	});
+
+	while (true) {
+
+		taskQueue.excecute();
+		std::this_thread::sleep_for(10ms);
+	}
 
 	std::string input;
 	do {
@@ -36,9 +84,9 @@ void runServer() {
 		std::getline(std::cin, input);
 
 		message::Wrapper wrapper;
+		google::protobuf::MessageLite& message = wrapper;
+
 		wrapper.set_text(input);
-		
-		message::Wrapper w = std::move(wrapper);
 
 		if (input == "x") {
 			std::cout << "Not allowing more connections\n";
@@ -67,16 +115,16 @@ void runClient() {
 	std::cout << "Start client\n";
 	auto client = Client::create();
 
-	bool connected = false;
+	std::atomic<bool> connected = false;
 	std::mutex mutex;
 	std::condition_variable cv;
 	
-	client->setReceiveHandler<message::Wrapper>([](const message::Wrapper& wrapper) {
+	client->setReceiveHandler<message::Wrapper>([](const message::Wrapper& wrapper, std::error_code ec) {
 		std::cout << wrapper.text() << "\n";
+		return true;
 	});
 
-	client->setDisconnectHandler([&]() {
-		std::lock_guard<std::mutex> lock(mutex);
+	client->setDisconnectHandler([&](std::error_code ec) {
 		connected = false;
 		std::cout << "Disconnected\n";
 	});
@@ -95,6 +143,8 @@ void runClient() {
 	std::unique_lock<std::mutex> lock(mutex);
 	client->connect("127.0.0.1", 5012);
 	cv.wait(lock);
+
+	
 	
 	if (connected) {
 		std::cout << "Connected\n";

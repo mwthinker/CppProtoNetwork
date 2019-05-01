@@ -17,7 +17,7 @@ namespace net {
 	}
 
 	void RemoteClient::disconnect() {
-		connection_.disconnect();
+		connection_.disconnect(make_error_code(Error::NO));
 	}
 
 } // Namespace net.

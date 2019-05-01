@@ -1,5 +1,4 @@
 #include "server.h"
-#include "logger.h"
 
 using namespace asio;
 using asio::ip::tcp;
@@ -11,7 +10,7 @@ namespace net {
 	}
 
 	Server::Server() : socket_(ioService_),
-		closeConnection_(false),
+		closeConnection_(false), allowConnections_(false),
 		acceptor_(ioService_), port_(0) {
 
 		GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -26,17 +25,19 @@ namespace net {
 			port_ = port;
 			try {
 				acceptor_ = asio::ip::tcp::acceptor(ioService_, tcp::endpoint(tcp::v4(), port));
+				allowConnections_ = true;
 			} catch (asio::system_error e) {
 				throw;
 			}
-			thread_ = std::thread([&]() {
-				doAccept();
-				ioService_.run();
+			thread_ = std::thread([keapAlive = shared_from_this()]() {
+				keapAlive->doAccept();
+				keapAlive->ioService_.run();
 			});
 		}
 	}
 
 	void Server::disconnect() {
+		allowConnections_ = false;
 		for (auto& client : clients_) {
 			client->disconnect();
 		}
@@ -47,25 +48,13 @@ namespace net {
 	}
 
 	void Server::setAllowingNewConnections(bool allow) {
-		if (allow && isAllowingNewConnections()) {
-			try {
-				acceptor_ = asio::ip::tcp::acceptor(ioService_, tcp::endpoint(tcp::v4(), port_));
-				//acceptor_.open(asio::ip::tcp::v4());
-			} catch (asio::system_error e) {
-				throw;
-			}
-			doAccept();
-		} else if (!isAllowingNewConnections()) {
-			std::error_code ec;
-			acceptor_.close(ec);
-			if (ec) {
-				logger()->error("[Connection] {}", ec.message());
-			}
+		if (allow != allowConnections_) {
+			allowConnections_ = allow;
 		}
 	}
 
 	bool Server::isAllowingNewConnections() const {
-		return acceptor_.is_open();
+		return allowConnections_;
 	}
 
 	void Server::sendToAll(const google::protobuf::MessageLite& message) {
@@ -75,9 +64,8 @@ namespace net {
 	}
 
 	void Server::doAccept() {
-		auto keapAlive = shared_from_this();
-		acceptor_.async_accept(socket_, [keapAlive](std::error_code ec) {
-			if (!ec) {
+		acceptor_.async_accept(socket_, [keapAlive = shared_from_this()](std::error_code ec) {
+			if (!ec && keapAlive->allowConnections_) {
 				auto remoteClient = RemoteClient::create(std::move(keapAlive->socket_));
 				keapAlive->clients_.push_back(remoteClient);
 

@@ -22,7 +22,7 @@ namespace net {
 	}
 
 	void Client::disconnect() {
-		connection_.disconnect();
+		connection_.disconnect(make_error_code(Error::NO));
 		active_ = false;
 	}
 
@@ -34,17 +34,17 @@ namespace net {
 			tcp::resolver::iterator endpoint_iterator = resolver.resolve(endpoint);
 
 			asio::async_connect(connection_.socket_, endpoint_iterator,
-				[this](std::error_code ec, tcp::resolver::iterator) {
+				[keapAlive = shared_from_this()](std::error_code ec, tcp::resolver::iterator) {
 
-				if (connectHandler_) {
-					connectHandler_(ec);
+				if (keapAlive->connectHandler_) {
+					keapAlive->connectHandler_(ec);
 				}
 				if (!ec) {
-					connection_.readHeader();
+					keapAlive->connection_.readHeader();
 				}
 			});
-			thread_ = std::thread([&]() {
-				ioService_.run();
+			thread_ = std::thread([keapAlive = shared_from_this()]() {
+				keapAlive->ioService_.run();
 			});
 		}
 	}

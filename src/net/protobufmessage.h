@@ -2,50 +2,48 @@
 #define CPPPROTONETWORK_NET_NET_PROTOBUFMESSAGE_H
 
 #include <vector>
-#include <algorithm>
-#include <string>
-
 #include <google/protobuf/message_lite.h>
 
 namespace net {
 
 	class ProtobufMessage {
 	public:
-		ProtobufMessage() : buffer_(getHeaderSize()) {
+		ProtobufMessage() = default;
+
+		ProtobufMessage(const ProtobufMessage&) = default;
+
+		ProtobufMessage(ProtobufMessage&& other) noexcept : buffer_(std::move(other.buffer_)) {
+		}
+
+		ProtobufMessage& operator=(const ProtobufMessage&) = default;
+
+		ProtobufMessage& operator=(ProtobufMessage&& other) noexcept {
+			buffer_ = std::move(other.buffer_);
+			return *this;
+		}
+
+		void clear() {
+			buffer_.resize(getHeaderSize());
 			defineBodySize();
 		}
 
-		ProtobufMessage(const google::protobuf::MessageLite& message) : buffer_(getHeaderSize()) {
+		void setBuffer(const google::protobuf::MessageLite& message) {
 			int size = message.ByteSize();
 			buffer_.resize(getHeaderSize() + size);
 			message.SerializeToArray(buffer_.data() + getHeaderSize(), size);
 			defineBodySize();
 		}
 
-		ProtobufMessage(ProtobufMessage&& other) noexcept {
-		}
-
-		ProtobufMessage& operator=(ProtobufMessage&& protobufMessage) noexcept {
-			return *this;
-		}
-
-		void clear() {
-			buffer_.resize(2);
-			defineBodySize();
-		}
-
-		void setBuffer(const char* buffer, int size) {
-			buffer_.resize(getHeaderSize() + size);
-			buffer_.insert(buffer_.begin() + getHeaderSize(), buffer, buffer + size);
-			defineBodySize();
-		}
-
-		size_t getSize() const {
+		size_t getSize() const noexcept {
 			return buffer_.size();
 		}
 
-		static constexpr int getHeaderSize() {
+		constexpr int getHeaderSize() const {
 			return 2;
+		}
+
+		void reserveHeaderSize() {
+			buffer_.resize(getHeaderSize());
 		}
 
 		void reserveBodySize() {
@@ -53,6 +51,10 @@ namespace net {
 		}
 
 		int getBodySize() const {
+			if (buffer_.empty()) {
+				return 0;
+			}
+			int size = decodeMessageSize(buffer_[0], buffer_[1]);
 			return decodeMessageSize(buffer_[0], buffer_[1]);
 		}
 
@@ -72,14 +74,12 @@ namespace net {
 			return buffer_.data() + getHeaderSize();
 		}
 
-		static int decodeMessageSize(char byte1, char byte2) {
+		static constexpr int decodeMessageSize(char byte1, char byte2) {
 			return byte1 * 256 + byte2;
 		}
 
 	private:
 		void defineBodySize() {
-			static_assert(getHeaderSize() == 2, "Header size is assumed to be 2");
-
 			int bodySize = buffer_.size() - getHeaderSize();
 			buffer_[0] = ((bodySize >> 8) & 0xFF);
 			buffer_[1] = (bodySize & 0xFF);

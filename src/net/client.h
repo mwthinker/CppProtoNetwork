@@ -34,7 +34,7 @@ namespace net {
 		}
 
 		template <typename ProtocolMessage>
-		void setReceiveHandler(std::function<void(const ProtocolMessage&)> messageHandler) {
+		void setReceiveHandler(std::function<bool(const ProtocolMessage&, std::error_code ec)> messageHandler) {
 			connection_.setReceiveHandler(messageHandler);
 		}
 

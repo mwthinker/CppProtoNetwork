@@ -17,13 +17,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SOURCES
+	src/net/bufferqueue.cpp
+	src/net/bufferqueue.h
 	src/net/client.cpp
 	src/net/connection.cpp
-	src/net/logger.h
+	src/net/connection.h
 	src/net/server.cpp	
 	src/net/remoteclient.cpp
 	src/net/client.h
-	src/net/connection.h
 	src/net/server.h
 	src/net/protobufmessage.h
 	src/net/remoteclient.h
@@ -55,17 +56,14 @@ target_include_directories(CppProtoNetwork
 		"$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"
 )
 
-message(STATUS "sasdasdadsasd ${PROTOBUF_INCLUDE_DIR}")
-
 target_link_libraries(CppProtoNetwork
 	PUBLIC
 		Threads::Threads
 		protobuf::libprotobuf
-		spdlog::spdlog
 )
 
 message(STATUS "CppProtoNetworkTest is available to add: -DCppProtoNetworkTest=1")
-option(CppProtoNetworkTest "Add MwLibrary2Test project." OFF)
+option(CppProtoNetworkTest "Add CppProtoNetworkTest project." OFF)
 
 if (CppProtoNetworkTest)
 	# Generated code for protobuf from *.proto files
