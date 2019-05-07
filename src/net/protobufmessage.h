@@ -8,7 +8,12 @@ namespace net {
 
 	class ProtobufMessage {
 	public:
-		ProtobufMessage() = default;
+		ProtobufMessage() : ProtobufMessage(0) {
+		}
+
+		ProtobufMessage(size_t size) : buffer_(size + getHeaderSize()) {
+			defineBodySize();
+		}
 
 		ProtobufMessage(const ProtobufMessage&) = default;
 

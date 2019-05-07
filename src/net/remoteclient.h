@@ -14,9 +14,8 @@ namespace net {
 		static std::shared_ptr<RemoteClient> create(asio::ip::tcp::socket socket);
 
 		void send(const google::protobuf::MessageLite& message);
-
-		template <typename ProtocolMessage>
-		void setReceiveHandler(std::function<bool(const ProtocolMessage&, std::error_code ec)> messageHandler) {
+		
+		void setReceiveHandler(const ReceiveHandler& messageHandler) {
 			connection_.setReceiveHandler(messageHandler);
 		}
 
@@ -25,6 +24,10 @@ namespace net {
 		}
 
 		void disconnect();
+
+		void release(MessageLitePtr&& message) {
+			connection_.release(std::move(message));
+		}
 
 	private:
 		RemoteClient(asio::ip::tcp::socket socket);

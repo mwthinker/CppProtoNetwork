@@ -14,8 +14,8 @@
 
 namespace net {
 
-	enum Error {
-		NO,
+	enum class Error {
+		NONE,
 		MESSAGE_MAX_SIZE,
 		PROTOBUF_PROTOCOL_ERROR
 	};
@@ -27,9 +27,20 @@ namespace net {
 	};
 
 	std::error_code make_error_code(Error e);
-	
+
+	using MessageLitePtr = std::unique_ptr<google::protobuf::MessageLite>;
+	using MessageQueuePtr = std::shared_ptr<BufferQueue<MessageLitePtr>>;
+
 	using DisconnectHandler = std::function<void(std::error_code ec)>;
-	using ReceiveHandler = std::function<bool(const net::ProtobufMessage& message, std::error_code ec)>;
+	
+	using ReceiveHandler = std::function<void(MessageLitePtr&& message, std::error_code ec)>;
+
+	template <class Derived>
+	std::unique_ptr<Derived> castProtobufMessage(MessageLitePtr&& base) noexcept {
+		static_assert(std::is_base_of<google::protobuf::MessageLite, Derived>::value,
+			"template type must have google::protobuf::MessageLite as base class");
+		return std::unique_ptr<Derived>(dynamic_cast<Derived*>(base.release()));
+	}
 
 	class Connection {
 	public:
@@ -38,41 +49,33 @@ namespace net {
 
 		void send(const google::protobuf::MessageLite& message);
 
-		asio::ip::tcp::socket socket_;
+		void setReceiveHandler(const ReceiveHandler& messageHandler);
 
-		template <typename ProtocolMessage>
-		void setReceiveHandler(std::function<bool(const ProtocolMessage&, std::error_code)> messageHandler) {
-			static_assert(std::is_base_of<google::protobuf::MessageLite, ProtocolMessage>::value,
-				"template type must have google::protobuf::MessageLite as base class");
-			
-			ProtocolMessage protocolMessage;
-			receiveHandler_ = [protocolMessage, messageHandler]
-			(const net::ProtobufMessage& message, std::error_code ec) mutable -> bool {
-				protocolMessage.Clear();
-				bool valid = protocolMessage.ParseFromArray(message.getBodyData(), message.getBodySize());
-				if (valid) {
-					return messageHandler(protocolMessage, make_error_code(Error::NO));
-				} else {
-					return messageHandler(protocolMessage, make_error_code(Error::PROTOBUF_PROTOCOL_ERROR));
-				}
-			};
-		}
-
-		void setDisconnectHandler(const DisconnectHandler& disconnectHandler) {
-			disconnectHandler_ = disconnectHandler;
-		}
+		void setDisconnectHandler(const DisconnectHandler& disconnectHandler);
 
 		void readHeader();
 
 		void disconnect(std::error_code ec);
 
+		void release(MessageLitePtr&&);
+
+		asio::ip::tcp::socket& getSocket() {
+			return socket_;
+		}
+
 	protected:
+		asio::ip::tcp::socket socket_;
+
+		using InternalReceiveHandler = std::function<void(const net::ProtobufMessage& message, std::error_code ec)>;
+
 		void readBody();
 
-		ReceiveHandler receiveHandler_;
+		InternalReceiveHandler receiveHandler_;
 		DisconnectHandler disconnectHandler_;
-		BufferQueue sendBuffer_;
+		BufferQueue<ProtobufMessage> sendBuffer_;
+		BufferQueue<MessageLitePtr> receiveBuffer_;
 		net::ProtobufMessage receiveMessage_;
+		google::protobuf::Arena arena_;
 	};
 
 } // Namespace net.

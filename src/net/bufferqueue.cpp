@@ -3,6 +3,7 @@
 
 namespace net {	
 	
+	/*
 	void BufferQueue::release(net::ProtobufMessage&& message) {
 		std::lock_guard<std::mutex> lock(mutex_);
 		buffer_.push(std::move(message));
@@ -23,5 +24,6 @@ namespace net {
 			buffer_.pop();
 		}
 	}
+	*/
 
 } // Namespace net.

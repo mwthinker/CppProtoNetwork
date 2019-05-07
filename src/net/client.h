@@ -11,6 +11,22 @@
 
 namespace net {
 
+	template <class T>
+	class IClient : public std::enable_shared_from_this<IClient<T>> {
+	public:
+		using DisconnectHandler = std::function<void(std::error_code ec)>;
+
+		using ReceiveHandler = std::function<void(MessageLitePtr&& message, std::error_code ec)>;
+
+		virtual void setReceiveHandler(const ReceiveHandler& messageHandler) = 0;
+
+		virtual void setDisconnectHandler(const DisconnectHandler& disconnectHandler) = 0;
+
+		virtual void connect(const std::string& ip, int port) = 0;
+
+		virtual void send(const google::protobuf::MessageLite& message) = 0;
+	};
+
 	using ConnectHandler = std::function<void(std::error_code ec)>;
 
 	class Client : public std::enable_shared_from_this<Client> {
@@ -32,10 +48,13 @@ namespace net {
 		void setDisconnectHandler(const DisconnectHandler& disconnectHandler) {
 			connection_.setDisconnectHandler(disconnectHandler);
 		}
+		
+		void setReceiveHandler(const ReceiveHandler& receiveHandler) {
+			connection_.setReceiveHandler(receiveHandler);
+		}
 
-		template <typename ProtocolMessage>
-		void setReceiveHandler(std::function<bool(const ProtocolMessage&, std::error_code ec)> messageHandler) {
-			connection_.setReceiveHandler(messageHandler);
+		void release(MessageLitePtr&& message) {
+			connection_.release(std::move(message));
 		}
 
 	private:

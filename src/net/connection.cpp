@@ -1,6 +1,8 @@
 #include "connection.h"
 
+#include <google/protobuf/arena.h>
 #include <asio.hpp>
+
 #include <iostream>
 #include <queue>
 
@@ -20,8 +22,8 @@ namespace net {
 	}
 
 	std::string ConnectionErrorCategory::message(int ev) const
-	{
-		switch (ev) {
+	{		
+		switch (static_cast<Error>(ev)) {
 			case Error::MESSAGE_MAX_SIZE:
 				return "received message to big";
 			case Error::PROTOBUF_PROTOCOL_ERROR:
@@ -36,11 +38,33 @@ namespace net {
 		return {static_cast<int>(e), connectionErrorCategory};
 	}
 
+
+
 	Connection::Connection(asio::ip::tcp::socket socket) : socket_(std::move(socket)) {
 	}
 
 	Connection::~Connection() {
-		disconnect(make_error_code(Error::NO));
+		disconnect(make_error_code(Error::NONE));
+	}
+
+	void Connection::setReceiveHandler(const ReceiveHandler& messageHandler) {
+		receiveHandler_ = [messageHandler, this]
+		(const net::ProtobufMessage& message, std::error_code ec) mutable {
+			MessageLitePtr messageLite;
+			receiveBuffer_.acquire(messageLite);
+			messageLite->Clear();
+
+			bool valid = messageLite->ParseFromArray(message.getBodyData(), message.getBodySize());
+			if (valid) {
+				messageHandler(std::move(messageLite), make_error_code(Error::NONE));
+			} else {
+				messageHandler(std::move(messageLite), make_error_code(Error::PROTOBUF_PROTOCOL_ERROR));
+			}
+		};
+	}
+
+	void Connection::setDisconnectHandler(const DisconnectHandler& disconnectHandler) {
+		disconnectHandler_ = disconnectHandler;
 	}
 
 	void Connection::send(const google::protobuf::MessageLite& message) {
@@ -86,17 +110,13 @@ namespace net {
 			asio::buffer(receiveMessage_.getBodyData(), receiveMessage_.getBodySize()),
 			asio::transfer_exactly(receiveMessage_.getBodySize()),
 			[this](std::error_code ec, std::size_t length) {
-
-			if (ec) {
-				disconnect(ec);
-			} else {
-				if (receiveHandler_ && receiveHandler_(receiveMessage_, make_error_code(Error::NO))) {
-					readHeader();
-				} else {
+				if (ec) {
 					disconnect(ec);
+				} else {
+					receiveHandler_(receiveMessage_, make_error_code(Error::NONE));
+					readHeader();
 				}
-			}
-		});
+			});
 	}
 
 	void Connection::disconnect(std::error_code ec) {
@@ -105,6 +125,10 @@ namespace net {
 		if (disconnectHandler_) {
 			disconnectHandler_(ec);
 		}
+	}
+
+	void Connection::release(MessageLitePtr&& message) {
+		receiveBuffer_.release(std::move(message));
 	}
 
 } // Namespace net.
