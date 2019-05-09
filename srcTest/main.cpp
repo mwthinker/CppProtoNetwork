@@ -21,10 +21,18 @@ void runServer() {
 	server->setConnectHandler([&](const RemoteClientPtr& remoteClientPtr) {
 		std::cout << "New Connection\n";	
 
-		remoteClientPtr->setReceiveHandler([remoteClientPtr](MessageLitePtr&& message, std::error_code ec) {
-			auto wrapper = castProtobufMessage<message::Wrapper>(std::move(message));
-			std::cout << wrapper->text() << "\n";
-			remoteClientPtr->release(std::move(wrapper));
+		remoteClientPtr->setReceiveHandler([remoteClientPtr](ProtobufMessage&& message, std::error_code ec) {
+			message::Wrapper wrapper;
+			bool valid = wrapper.ParseFromArray(message.getBodyData(), message.getBodySize());
+			if (valid) {
+				std::cout << wrapper.text() << "\n";
+			} else {
+				std::cout << "Protocol error\n";
+			}
+			remoteClientPtr->release(std::move(message));
+			//auto wrapper = castProtobufMessage<message::Wrapper>(std::move(message));
+			//std::cout << wrapper->text() << "\n";
+			//remoteClientPtr->release(std::move(wrapper));
 		});
 
 		remoteClientPtr->setDisconnectHandler([](std::error_code ec) {
@@ -77,10 +85,19 @@ void runClient() {
 	std::mutex mutex;
 	std::condition_variable cv;
 	
-	client->setReceiveHandler([&](MessageLitePtr&& message, std::error_code ec) {
-		auto wrapper = castProtobufMessage<message::Wrapper>(std::move(message));
-		std::cout << wrapper->text() << "\n";
-		client->release(std::move(wrapper));
+	client->setReceiveHandler([client](ProtobufMessage&& message, std::error_code ec) {
+		message::Wrapper wrapper;
+		bool valid = wrapper.ParseFromArray(message.getBodyData(), message.getBodySize());
+		if (valid) {			
+			std::cout << wrapper.text() << "\n";
+		} else {
+			std::cout << "Protocol error\n";
+		}
+		client->release(std::move(message));
+
+		//auto wrapper = castProtobufMessage<message::Wrapper>(std::move(message));
+		//std::cout << wrapper->text() << "\n";
+		//client->release(std::move(wrapper));
 	});
 
 	client->setDisconnectHandler([&](std::error_code ec) {

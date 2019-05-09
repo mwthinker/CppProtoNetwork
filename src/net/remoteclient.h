@@ -25,7 +25,7 @@ namespace net {
 
 		void disconnect();
 
-		void release(MessageLitePtr&& message) {
+		void release(ProtobufMessage&& message) {
 			connection_.release(std::move(message));
 		}
 

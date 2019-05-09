@@ -38,8 +38,6 @@ namespace net {
 		return {static_cast<int>(e), connectionErrorCategory};
 	}
 
-
-
 	Connection::Connection(asio::ip::tcp::socket socket) : socket_(std::move(socket)) {
 	}
 
@@ -47,11 +45,13 @@ namespace net {
 		disconnect(make_error_code(Error::NONE));
 	}
 
-	void Connection::setReceiveHandler(const ReceiveHandler& messageHandler) {
+	void Connection::setReceiveHandler(const ReceiveHandler& messageHandler) {		
+		receiveHandler_ = messageHandler;
+		/*
 		receiveHandler_ = [messageHandler, this]
 		(const net::ProtobufMessage& message, std::error_code ec) mutable {
 			MessageLitePtr messageLite;
-			receiveBuffer_.acquire(messageLite);
+			//receiveBuffer_.acquire(messageLite);
 			messageLite->Clear();
 
 			bool valid = messageLite->ParseFromArray(message.getBodyData(), message.getBodySize());
@@ -61,6 +61,7 @@ namespace net {
 				messageHandler(std::move(messageLite), make_error_code(Error::PROTOBUF_PROTOCOL_ERROR));
 			}
 		};
+		*/
 	}
 
 	void Connection::setDisconnectHandler(const DisconnectHandler& disconnectHandler) {
@@ -88,7 +89,8 @@ namespace net {
 	}
 
 	void Connection::readHeader() {
-		receiveMessage_.reserveHeaderSize();
+		receiveBuffer_.acquire(receiveMessage_);
+
 		asio::async_read(socket_,
 			asio::buffer(receiveMessage_.getData(), receiveMessage_.getHeaderSize()),
 			asio::transfer_exactly(receiveMessage_.getHeaderSize()),
@@ -113,7 +115,7 @@ namespace net {
 				if (ec) {
 					disconnect(ec);
 				} else {
-					receiveHandler_(receiveMessage_, make_error_code(Error::NONE));
+					receiveHandler_(std::move(receiveMessage_), make_error_code(Error::NONE));
 					readHeader();
 				}
 			});
@@ -127,7 +129,7 @@ namespace net {
 		}
 	}
 
-	void Connection::release(MessageLitePtr&& message) {
+	void Connection::release(ProtobufMessage&& message) {
 		receiveBuffer_.release(std::move(message));
 	}
 

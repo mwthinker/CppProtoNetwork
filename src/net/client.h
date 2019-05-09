@@ -30,7 +30,7 @@ namespace net {
 	using ConnectHandler = std::function<void(std::error_code ec)>;
 
 	class Client : public std::enable_shared_from_this<Client> {
-	public:		
+	public:
 		~Client();
 
 		static std::shared_ptr<Client> create();
@@ -53,7 +53,7 @@ namespace net {
 			connection_.setReceiveHandler(receiveHandler);
 		}
 
-		void release(MessageLitePtr&& message) {
+		void release(ProtobufMessage&& message) {
 			connection_.release(std::move(message));
 		}
 
@@ -64,7 +64,6 @@ namespace net {
 		Connection connection_;
 		ConnectHandler connectHandler_;
 		std::thread thread_;
-		bool active_;
 	};
 
 } // Namespace net.

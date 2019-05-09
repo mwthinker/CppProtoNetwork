@@ -29,11 +29,11 @@ namespace net {
 	std::error_code make_error_code(Error e);
 
 	using MessageLitePtr = std::unique_ptr<google::protobuf::MessageLite>;
-	using MessageQueuePtr = std::shared_ptr<BufferQueue<MessageLitePtr>>;
+	//using MessageQueuePtr = std::shared_ptr<BufferQueue<MessageLitePtr>>;
 
 	using DisconnectHandler = std::function<void(std::error_code ec)>;
 	
-	using ReceiveHandler = std::function<void(MessageLitePtr&& message, std::error_code ec)>;
+	using ReceiveHandler = std::function<void(ProtobufMessage&& message, std::error_code ec)>;
 
 	template <class Derived>
 	std::unique_ptr<Derived> castProtobufMessage(MessageLitePtr&& base) noexcept {
@@ -57,7 +57,7 @@ namespace net {
 
 		void disconnect(std::error_code ec);
 
-		void release(MessageLitePtr&&);
+		void release(ProtobufMessage&&);
 
 		asio::ip::tcp::socket& getSocket() {
 			return socket_;
@@ -66,16 +66,15 @@ namespace net {
 	protected:
 		asio::ip::tcp::socket socket_;
 
-		using InternalReceiveHandler = std::function<void(const net::ProtobufMessage& message, std::error_code ec)>;
+		using InternalReceiveHandler = ReceiveHandler;//std::function<void(const net::ProtobufMessage&& message, std::error_code ec)>;
 
 		void readBody();
 
 		InternalReceiveHandler receiveHandler_;
 		DisconnectHandler disconnectHandler_;
-		BufferQueue<ProtobufMessage> sendBuffer_;
-		BufferQueue<MessageLitePtr> receiveBuffer_;
+		ProtobufMessageQueue sendBuffer_;
+		ProtobufMessageQueue receiveBuffer_;
 		net::ProtobufMessage receiveMessage_;
-		google::protobuf::Arena arena_;
 	};
 
 } // Namespace net.

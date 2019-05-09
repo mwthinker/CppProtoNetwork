@@ -7,21 +7,29 @@
 #include <queue>
 
 namespace net {
-
-	template <class T>
-	class BufferQueue {
+	
+	class ProtobufMessageQueue {
 	public:
-		BufferQueue() = default;
+		ProtobufMessageQueue() : messageSize_(DEFAULT_MESSAGE_SIZE) {
+		}
 
-		void release(T&& message) {
+		ProtobufMessageQueue(size_t messageSize) : messageSize_(messageSize) {
+		}
+
+		ProtobufMessageQueue(const ProtobufMessageQueue&) = delete;
+		ProtobufMessageQueue(ProtobufMessageQueue&&) = delete;
+		ProtobufMessageQueue& operator=(ProtobufMessageQueue&&) = delete;
+
+		void release(ProtobufMessage&& message) {
 			std::lock_guard<std::mutex> lock(mutex_);
+			message.clear();
 			buffer_.push(std::move(message));
 		}
 
-		void acquire(T& message) {
+		void acquire(ProtobufMessage& message) {
 			std::lock_guard<std::mutex> lock(mutex_);
 			if (buffer_.empty()) {
-				//message = T();
+				message = ProtobufMessage(messageSize_);
 				return;
 			}
 			message = std::move(buffer_.front());
@@ -29,6 +37,7 @@ namespace net {
 		}
 
 		void clear() {
+			std::lock_guard<std::mutex> lock(mutex_);
 			while (!buffer_.empty()) {
 				buffer_.pop();
 			}
@@ -39,9 +48,22 @@ namespace net {
 			return buffer_.size();
 		}
 
+		size_t getMessageSize() const {
+			std::lock_guard<std::mutex> lock(mutex_);
+			return messageSize_;
+		}
+
+		void setMessageSize(size_t messageSize) {
+			std::lock_guard<std::mutex> lock(mutex_);
+			messageSize_ = messageSize;
+		}
+
 	private:
-		std::mutex mutex_;
-		std::queue<T> buffer_;
+		static const size_t DEFAULT_MESSAGE_SIZE = 512;
+
+		mutable std::mutex mutex_;
+		size_t messageSize_;
+		std::queue<ProtobufMessage> buffer_;
 	};
 
 } // Namespace net.
