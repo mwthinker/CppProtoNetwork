@@ -28,19 +28,10 @@ namespace net {
 
 	std::error_code make_error_code(Error e);
 
-	using MessageLitePtr = std::unique_ptr<google::protobuf::MessageLite>;
-	//using MessageQueuePtr = std::shared_ptr<BufferQueue<MessageLitePtr>>;
-
 	using DisconnectHandler = std::function<void(std::error_code ec)>;
 	
-	using ReceiveHandler = std::function<void(ProtobufMessage&& message, std::error_code ec)>;
-
-	template <class Derived>
-	std::unique_ptr<Derived> castProtobufMessage(MessageLitePtr&& base) noexcept {
-		static_assert(std::is_base_of<google::protobuf::MessageLite, Derived>::value,
-			"template type must have google::protobuf::MessageLite as base class");
-		return std::unique_ptr<Derived>(dynamic_cast<Derived*>(base.release()));
-	}
+	template <class Message>
+	using ReceiveHandler = std::function<void(const Message& message, std::error_code ec)>;
 
 	class Connection {
 	public:
@@ -49,7 +40,27 @@ namespace net {
 
 		void send(const google::protobuf::MessageLite& message);
 
-		void setReceiveHandler(const ReceiveHandler& messageHandler);
+		template <typename Message>
+		void setReceiveHandler(const ReceiveHandler<Message>& messageHandler) {
+			static_assert(std::is_base_of<google::protobuf::MessageLite, Message>::value,
+				"template type must have google::protobuf::MessageLite as base class");
+
+			Message protocolMessage;
+			receiveHandler_ = [protocolMessage, messageHandler]
+			(const net::ProtobufMessage& message, std::error_code ec) mutable {
+				protocolMessage.Clear();
+				if (ec) {
+					messageHandler(protocolMessage, ec);
+				} else {
+					bool valid = protocolMessage.ParseFromArray(message.getBodyData(), message.getBodySize());
+					if (valid) {
+						messageHandler(protocolMessage, ec);
+					} else {
+						messageHandler(protocolMessage, make_error_code(Error::PROTOBUF_PROTOCOL_ERROR));
+					}
+				}
+			};
+		}
 
 		void setDisconnectHandler(const DisconnectHandler& disconnectHandler);
 
@@ -57,23 +68,20 @@ namespace net {
 
 		void disconnect(std::error_code ec);
 
-		void release(ProtobufMessage&&);
-
 		asio::ip::tcp::socket& getSocket() {
 			return socket_;
 		}
 
-	protected:
-		asio::ip::tcp::socket socket_;
+	private:
+		using InternalReceiveHandler = std::function<void(const ProtobufMessage& message, std::error_code ec)>;
 
-		using InternalReceiveHandler = ReceiveHandler;//std::function<void(const net::ProtobufMessage&& message, std::error_code ec)>;
+		asio::ip::tcp::socket socket_;
 
 		void readBody();
 
 		InternalReceiveHandler receiveHandler_;
 		DisconnectHandler disconnectHandler_;
 		ProtobufMessageQueue sendBuffer_;
-		ProtobufMessageQueue receiveBuffer_;
 		net::ProtobufMessage receiveMessage_;
 	};
 

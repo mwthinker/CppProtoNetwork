@@ -1,14 +1,17 @@
 #include "remoteclient.h"
+#include "server.h"
 
 #include <asio.hpp>
 
 namespace net {
 
-	std::shared_ptr<RemoteClient> RemoteClient::create(asio::ip::tcp::socket socket) {
-		return std::shared_ptr<RemoteClient>(new RemoteClient(std::move(socket)));
+	std::shared_ptr<RemoteClient> RemoteClient::create(asio::ip::tcp::socket socket, const std::shared_ptr<Server>& server) {
+		return std::shared_ptr<RemoteClient>(new RemoteClient(std::move(socket), server));
 	}
 
-	RemoteClient::RemoteClient(asio::ip::tcp::socket socket) : connection_(std::move(socket)) {
+	RemoteClient::RemoteClient(asio::ip::tcp::socket socket, const std::shared_ptr<Server>& server)
+		: connection_(std::move(socket)), server_(server) {
+		
 		connection_.readHeader();
 	}
 
@@ -18,6 +21,13 @@ namespace net {
 
 	void RemoteClient::disconnect() {
 		connection_.disconnect(make_error_code(Error::NONE));
+	}
+
+	void RemoteClient::setDisconnectHandler(const DisconnectHandler& disconnectHandler) {
+		connection_.setDisconnectHandler([disconnectHandler = disconnectHandler, keapAlive = shared_from_this()](std::error_code ec) {
+			keapAlive->server_->removeClient(keapAlive->shared_from_this());
+			disconnectHandler(ec);
+		});
 	}
 
 } // Namespace net.

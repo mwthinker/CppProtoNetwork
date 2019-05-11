@@ -22,6 +22,8 @@ namespace net {
 
 	class Server : public std::enable_shared_from_this<Server> {
 	public:
+		friend class RemoteClient;
+
 		~Server();
 
 		static std::shared_ptr<Server> create();
@@ -30,9 +32,7 @@ namespace net {
 
 		void disconnect();
 
-		void setConnectHandler(const ServerConnectHandler& acceptionFunction) {
-			connectHandler_ = acceptionFunction;
-		}
+		void setConnectHandler(const ServerConnectHandler& acceptionFunction);
 
 		void sendToAll(const google::protobuf::MessageLite& message);
 
@@ -43,22 +43,30 @@ namespace net {
 		void setAllowingNewConnections(bool allow);
 
 		bool isAllowingNewConnections() const;
+
+		bool isActive() const {
+			return active_;
+		}
 		
 	private:
 		Server();
+
+		void removeClient(const RemoteClientPtr& client);
 
 		void doAccept();
 
 		ServerConnectHandler connectHandler_;
 
+		bool closeConnection_;
+		int port_;
+		std::atomic<bool> active_;
+		std::atomic<bool> allowConnections_;
 		asio::io_service ioService_;
 		asio::ip::tcp::socket socket_;
 		asio::ip::tcp::acceptor acceptor_;
 		std::vector<RemoteClientPtr> clients_;
+		std::mutex mutex_;
 		std::thread thread_;
-		bool closeConnection_;
-		int port_;
-		std::atomic<bool> allowConnections_;
 	};
 
 } // Namespace net.

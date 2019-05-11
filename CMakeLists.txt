@@ -20,14 +20,15 @@ set(SOURCES
 	src/net/bufferqueue.cpp
 	src/net/bufferqueue.h
 	src/net/client.cpp
+	src/net/client.h
 	src/net/connection.cpp
 	src/net/connection.h
-	src/net/server.cpp	
-	src/net/remoteclient.cpp
-	src/net/client.h
-	src/net/server.h
+	src/net/protobufmessage.cpp
 	src/net/protobufmessage.h
+	src/net/remoteclient.cpp
 	src/net/remoteclient.h
+	src/net/server.cpp
+	src/net/server.h
 )
 
 add_library(CppProtoNetwork ${SOURCES})

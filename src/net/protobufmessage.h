@@ -8,36 +8,21 @@ namespace net {
 
 	class ProtobufMessage {
 	public:
-		ProtobufMessage() : ProtobufMessage(0) {
-		}
+		ProtobufMessage();
 
-		ProtobufMessage(size_t size) : buffer_(size + getHeaderSize()) {
-			defineBodySize();
-		}
+		ProtobufMessage(size_t size);
 
 		ProtobufMessage(const ProtobufMessage&) = default;
 
-		ProtobufMessage(ProtobufMessage&& other) noexcept : buffer_(std::move(other.buffer_)) {
-		}
+		ProtobufMessage(ProtobufMessage&& other) noexcept;
 
 		ProtobufMessage& operator=(const ProtobufMessage&) = default;
 
-		ProtobufMessage& operator=(ProtobufMessage&& other) noexcept {
-			buffer_ = std::move(other.buffer_);
-			return *this;
-		}
+		ProtobufMessage& operator=(ProtobufMessage&& other) noexcept;
 
-		void clear() {
-			buffer_.resize(getHeaderSize());
-			defineBodySize();
-		}
+		void clear();
 
-		void setBuffer(const google::protobuf::MessageLite& message) {
-			int size = message.ByteSize();
-			buffer_.resize(getHeaderSize() + size);
-			message.SerializeToArray(buffer_.data() + getHeaderSize(), size);
-			defineBodySize();
-		}
+		void setBuffer(const google::protobuf::MessageLite& message);
 
 		size_t getSize() const noexcept {
 			return buffer_.size();
@@ -47,21 +32,9 @@ namespace net {
 			return 2;
 		}
 
-		void reserveHeaderSize() {
-			buffer_.resize(getHeaderSize());
-		}
+		void reserveBodySize();
 
-		void reserveBodySize() {
-			buffer_.resize(getHeaderSize() + getBodySize());
-		}
-
-		int getBodySize() const {
-			if (buffer_.empty()) {
-				return 0;
-			}
-			int size = decodeMessageSize(buffer_[0], buffer_[1]);
-			return decodeMessageSize(buffer_[0], buffer_[1]);
-		}
+		int getBodySize() const;
 
 		const char* getData() const {
 			return buffer_.data();
@@ -77,18 +50,12 @@ namespace net {
 
 		char* getBodyData() {
 			return buffer_.data() + getHeaderSize();
-		}
-
-		static constexpr int decodeMessageSize(char byte1, char byte2) {
-			return byte1 * 256 + byte2;
-		}
+		}		
 
 	private:
-		void defineBodySize() {
-			int bodySize = buffer_.size() - getHeaderSize();
-			buffer_[0] = ((bodySize >> 8) & 0xFF);
-			buffer_[1] = (bodySize & 0xFF);
-		}
+		void reserveHeaderSize();
+
+		void defineBodySize();
 
 		std::vector<char> buffer_;
 	};

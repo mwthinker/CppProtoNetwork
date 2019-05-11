@@ -45,25 +45,6 @@ namespace net {
 		disconnect(make_error_code(Error::NONE));
 	}
 
-	void Connection::setReceiveHandler(const ReceiveHandler& messageHandler) {		
-		receiveHandler_ = messageHandler;
-		/*
-		receiveHandler_ = [messageHandler, this]
-		(const net::ProtobufMessage& message, std::error_code ec) mutable {
-			MessageLitePtr messageLite;
-			//receiveBuffer_.acquire(messageLite);
-			messageLite->Clear();
-
-			bool valid = messageLite->ParseFromArray(message.getBodyData(), message.getBodySize());
-			if (valid) {
-				messageHandler(std::move(messageLite), make_error_code(Error::NONE));
-			} else {
-				messageHandler(std::move(messageLite), make_error_code(Error::PROTOBUF_PROTOCOL_ERROR));
-			}
-		};
-		*/
-	}
-
 	void Connection::setDisconnectHandler(const DisconnectHandler& disconnectHandler) {
 		disconnectHandler_ = disconnectHandler;
 	}
@@ -76,8 +57,8 @@ namespace net {
 		const char* data = protobufMessage.getData();
 		size_t size = protobufMessage.getSize();
 		asio::async_write(socket_, asio::buffer(data, size), asio::transfer_exactly(size),
-			[this, pb = std::move(protobufMessage)] (std::error_code ec, std::size_t length) mutable {
-			
+			[this, pb = std::move(protobufMessage)](std::error_code ec, std::size_t length) mutable {
+
 			if (pb.getBodySize() > MAX_SIZE) {
 				disconnect(make_error_code(Error::MESSAGE_MAX_SIZE));
 			} else if (ec) {
@@ -89,8 +70,7 @@ namespace net {
 	}
 
 	void Connection::readHeader() {
-		receiveBuffer_.acquire(receiveMessage_);
-
+		receiveMessage_.clear();
 		asio::async_read(socket_,
 			asio::buffer(receiveMessage_.getData(), receiveMessage_.getHeaderSize()),
 			asio::transfer_exactly(receiveMessage_.getHeaderSize()),
@@ -115,22 +95,22 @@ namespace net {
 				if (ec) {
 					disconnect(ec);
 				} else {
-					receiveHandler_(std::move(receiveMessage_), make_error_code(Error::NONE));
-					readHeader();
+					if (receiveHandler_) {
+						receiveHandler_(receiveMessage_, make_error_code(Error::NONE));
+						readHeader();
+					} else {
+						disconnect(ec);
+					}
 				}
 			});
 	}
 
 	void Connection::disconnect(std::error_code ec) {
 		socket_.close();
-
+		
 		if (disconnectHandler_) {
 			disconnectHandler_(ec);
 		}
-	}
-
-	void Connection::release(ProtobufMessage&& message) {
-		receiveBuffer_.release(std::move(message));
 	}
 
 } // Namespace net.

@@ -15,24 +15,13 @@ using namespace std::chrono_literals;
 
 void runServer() {
 	std::cout << "Start server\n";
-	auto server = Server::create();
-	server->connect(5012);
+	auto server = Server::create();	
 
 	server->setConnectHandler([&](const RemoteClientPtr& remoteClientPtr) {
 		std::cout << "New Connection\n";	
 
-		remoteClientPtr->setReceiveHandler([remoteClientPtr](ProtobufMessage&& message, std::error_code ec) {
-			message::Wrapper wrapper;
-			bool valid = wrapper.ParseFromArray(message.getBodyData(), message.getBodySize());
-			if (valid) {
-				std::cout << wrapper.text() << "\n";
-			} else {
-				std::cout << "Protocol error\n";
-			}
-			remoteClientPtr->release(std::move(message));
-			//auto wrapper = castProtobufMessage<message::Wrapper>(std::move(message));
-			//std::cout << wrapper->text() << "\n";
-			//remoteClientPtr->release(std::move(wrapper));
+		remoteClientPtr->setReceiveHandler<message::Wrapper>([](const message::Wrapper& wrapper, std::error_code ec) {
+			std::cout << wrapper.text() << "\n";
 		});
 
 		remoteClientPtr->setDisconnectHandler([](std::error_code ec) {
@@ -40,14 +29,25 @@ void runServer() {
 		});
 	});
 
+	try {
+		server->connect(5012);
+	} catch (asio::system_error se) {
+		std::cout << se.what() << "\n";
+		return;
+	}
+
+	std::cout << "Not allowing more connections: [y]\n";
+	std::cout << "Allowing more connections: [n]\n";
+	std::cout << "Exit: [x]\n";
+
+	message::Wrapper wrapper;
+
 	std::string input;
 	do {
 		std::cout << "Text: ";
 		std::getline(std::cin, input);
 
-		message::Wrapper wrapper;
-		google::protobuf::MessageLite& message = wrapper;
-
+		wrapper.Clear();
 		wrapper.set_text(input);
 
 		if (input == "y") {
@@ -75,29 +75,18 @@ void runServer() {
 	} while (!input.empty());
 }
 
-
-
 void runClient() {
 	std::cout << "Start client\n";
+	std::cout << "Exit: [x]\n";
+
 	auto client = Client::create();
 
 	std::atomic<bool> connected = false;
 	std::mutex mutex;
 	std::condition_variable cv;
 	
-	client->setReceiveHandler([client](ProtobufMessage&& message, std::error_code ec) {
-		message::Wrapper wrapper;
-		bool valid = wrapper.ParseFromArray(message.getBodyData(), message.getBodySize());
-		if (valid) {			
-			std::cout << wrapper.text() << "\n";
-		} else {
-			std::cout << "Protocol error\n";
-		}
-		client->release(std::move(message));
-
-		//auto wrapper = castProtobufMessage<message::Wrapper>(std::move(message));
-		//std::cout << wrapper->text() << "\n";
-		//client->release(std::move(wrapper));
+	client->setReceiveHandler<message::Wrapper>([client](const message::Wrapper& message, std::error_code ec) {
+		std::cout << message.text() << "\n";
 	});
 
 	client->setDisconnectHandler([&](std::error_code ec) {
@@ -128,7 +117,7 @@ void runClient() {
 			std::getline(std::cin, input);
 
 			message::Wrapper wrapper;
-			wrapper.set_text(input);			
+			wrapper.set_text(input);
 
 			client->send(wrapper);
 			if (input == "x") {

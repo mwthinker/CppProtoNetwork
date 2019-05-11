@@ -11,43 +11,73 @@ using asio::ip::tcp;
 
 namespace net {
 
-	Client::Client() : connection_(asio::ip::tcp::socket(ioService_)) {
+	Client::Client() : connection_(asio::ip::tcp::socket(ioService_)), active_(false) {
 		GOOGLE_PROTOBUF_VERIFY_VERSION;
 	}
 
-	void Client::send(const google::protobuf::MessageLite& message) {
-		connection_.send(message);
-	}
-
-	void Client::disconnect() {
-		connection_.disconnect(make_error_code(Error::NONE));
+	Client::~Client() {
+		disconnect();
+		thread_.join();
 	}
 
 	void Client::connect(const std::string& ip, int port) {
-		asio::ip::tcp::endpoint endpoint(ip::address::from_string(ip), port);
-		tcp::resolver resolver(ioService_);
-		tcp::resolver::iterator endpoint_iterator = resolver.resolve(endpoint);
+		if (!active_) {
+			active_ = true;
+			asio::ip::tcp::endpoint endpoint(ip::address::from_string(ip), port);
+			tcp::resolver resolver(ioService_);
+			tcp::resolver::iterator endpoint_iterator = resolver.resolve(endpoint);
 
-		asio::async_connect(connection_.getSocket(), endpoint_iterator,
-			[keapAlive = shared_from_this()](std::error_code ec, tcp::resolver::iterator) {
+			asio::async_connect(connection_.getSocket(), endpoint_iterator,
+				[keapAlive = shared_from_this()](std::error_code ec, tcp::resolver::iterator) {
 
-			if (keapAlive->connectHandler_) {
-				keapAlive->connectHandler_(ec);
-			}
-			if (ec) {
-				keapAlive->connection_.disconnect(ec);
-			} else {
-				keapAlive->connection_.readHeader();
-			}
-		});
-		thread_ = std::thread([keapAlive = shared_from_this()]() {
-			keapAlive->ioService_.run();
-		});
+				if (keapAlive->connectHandler_) {
+					keapAlive->connectHandler_(ec);
+				}
+				if (ec) {
+					keapAlive->connection_.disconnect(ec);
+				} else {
+					keapAlive->connection_.readHeader();
+				}
+			});
+			thread_ = std::thread([keapAlive = shared_from_this()]() {
+				keapAlive->ioService_.run();
+			});
+		}
 	}
 
-	Client::~Client() {
-		ioService_.stop();
-		thread_.join();
+	void Client::send(const google::protobuf::MessageLite& message) {
+		if (active_) {
+			connection_.send(message);
+		}
+	}
+
+	void Client::disconnect() {
+		if (active_) {
+			connection_.disconnect(make_error_code(Error::NONE));
+			disconnect();
+		}
+	}
+
+	void Client::setConnectHandler(const ConnectHandler& connectHandler) {
+		if (!active_) {
+			connectHandler_ = connectHandler;
+		}
+	}
+
+	void Client::setDisconnectHandler(const DisconnectHandler& disconnectHandler) {
+		if (!active_) {
+			connection_.setDisconnectHandler([disconnectHandler = disconnectHandler, keapAlive = shared_from_this()](std::error_code ec) {
+				keapAlive->close();
+				disconnectHandler(ec);
+			});
+		}
+	}
+
+	void Client::close() {
+		if (active_) {
+			ioService_.stop();
+			active_ = false;
+		}
 	}
 
 	std::shared_ptr<Client> Client::create() {
