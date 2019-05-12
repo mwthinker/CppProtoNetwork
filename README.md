@@ -1,9 +1,140 @@
-SimpleNetwork
+CppProtoNetwork
 ======
-A simple network library using TCP sockets. Handles multiple remote/localy clients 
-connections to the server. Uses SDL_net 2.0 (www.libsdl.org/) library. It uses C++11
-and the C++ standard library.
+# About
+A network library using TCP sockets. Handles server and clients. Uses standalone [Asio](https://think-async.com/Asio/) (no boost) library. Data is serialized using [Protobuf](https://developers.google.com/protocol-buffers/).
+
+All functions are asynchronous.
+
+It uses C++17 and the C++ standard library.
+
+Uses one internal thread. Is safe to use from one thread (probably).
+
+# Requirements
+
+* [CMake](https://cmake.org/)
+* C++17 compliant compiler
+* [vcpkg](https://github.com/microsoft/vcpkg)
+
+## vcpkg
+Either define CMAKE_TOOLCHAIN_FILE in cmake to use the one provided by vcpkg or define a enviromental variable VCPKG_ROOT to the vcpkg install directory.
+
+Install following packages:
+```
+vcpkg install protobuf
+vcpkg install asio
+```
+
+# Example code
+## Proto file
+
+```c
+syntax = "proto3";
+
+package message;
+
+message Wrapper {
+	string text = 1;
+}
+```
+
+## Server code
+
+```C++
+#include <net/server.h>
+#include <message.pb.h> // Generated code by protobuf.
+
+... // Some code.
+
+auto server = Server::create();
+// Must setup connections handlers before server is connected.
+// Data is called from the server's internal thread, data Therefore need to be
+// protected.
+server->setConnectHandler([&](const RemoteClientPtr& remoteClientPtr) {
+	std::cout << "New Connection\n";	
+
+	remoteClientPtr->setReceiveHandler<message::Wrapper>([](const message::Wrapper& wrapper, std::error_code ec) {
+		std::cout << wrapper.text() << "\n";
+	});
+
+	remoteClientPtr->setDisconnectHandler([](std::error_code ec) {
+		std::cout << "Disconnected\n";
+	});
+});
+
+... // Some code.
+
+// Start listening to incomming connections on port 5012
+try {
+	server->connect(5012);
+} catch (asio::system_error se) {
+	std::cout << se.what() << "\n";
+	return;
+}
+
+... // Some code.
+
+// Set some data
+message::Wrapper wrapper;
+wrapper.set_text("Hellor world");
+
+// Send to all conencted clients.
+server->sendToAll(wrapper);
+
+... // Some code.
+
+void sendToSpecificClient(RemoteClientPtr remoteClientPtr) {
+	message::Wrapper wrapper;
+	wrapper.set_text("Hello remote client!");
+
+	remoteClientPtr->send(wrapper);
+}
+
+```
+
+## Client code
+
+```C++
+#include <net/client.h>
+#include <message.pb.h> // Generated code by protobuf.
+
+... // Some code.
+
+auto client = Client::create();
+// Must setup connections handlers before client is connected.
+// Data is called from the clients's internal thread, data Therefore need to be
+// protected.
+client->setReceiveHandler<message::Wrapper>([client](const message::Wrapper& message, std::error_code ec) {
+	std::cout << message.text() << "\n";
+});
+
+client->setConnectHandler([&](std::error_code ec) {
+	if (ec) {
+		std::cout << ec.message() << "\n";
+	} else {
+		std::cout << "Jippi! Is connected to server!" << "\n";
+	}
+});
+
+client->setDisconnectHandler([&](std::error_code ec) {	
+	std::cout << "Disconnected: " << ec.message() << "\n";
+});
+
+... // Some code.
+
+// Connect to server.
+client->connect("127.0.0.1", 5012);
+
+... // Some code.
+
+// Set some data
+message::Wrapper wrapper;
+wrapper.set_text("Hellor world");
+
+// Send to server
+client->send(wrapper);
+
+```
 
 Open source
 ======
-The project is under the MIT license (see LICENSE.txt).
+The project is under the MIT license (see LICENSE.md).
