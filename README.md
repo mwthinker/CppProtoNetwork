@@ -49,7 +49,7 @@ auto server = Server::create();
 // Must setup connections handlers before server is connected.
 // Data is called from the server's internal thread, data Therefore need to be
 // protected.
-server->setConnectHandler([&](const RemoteClientPtr& remoteClientPtr) {
+server->setConnectHandler([](const RemoteClientPtr& remoteClientPtr) {
     std::cout << "New Connection\n";	
 
     remoteClientPtr->setReceiveHandler<message::Wrapper>([](const message::Wrapper& wrapper, std::error_code ec) {
@@ -103,11 +103,11 @@ auto client = Client::create();
 // Must setup connections handlers before client is connected.
 // Data is called from the clients's internal thread, data Therefore need to be
 // protected.
-client->setReceiveHandler<message::Wrapper>([client](const message::Wrapper& message, std::error_code ec) {
+client->setReceiveHandler<message::Wrapper>([](const message::Wrapper& message, std::error_code ec) {
     std::cout << message.text() << "\n";
 });
 
-client->setConnectHandler([&](std::error_code ec) {
+client->setConnectHandler([](std::error_code ec) {
     if (ec) {
         std::cout << ec.message() << "\n";
     } else {
@@ -115,7 +115,7 @@ client->setConnectHandler([&](std::error_code ec) {
     }
 });
 
-client->setDisconnectHandler([&](std::error_code ec) {	
+client->setDisconnectHandler([](std::error_code ec) {	
     std::cout << "Disconnected: " << ec.message() << "\n";
 });
 
