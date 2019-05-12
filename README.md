@@ -33,7 +33,7 @@ syntax = "proto3";
 package message;
 
 message Wrapper {
-	string text = 1;
+    string text = 1;
 }
 ```
 
@@ -104,7 +104,7 @@ auto client = Client::create();
 // Data is called from the clients's internal thread, data Therefore need to be
 // protected.
 client->setReceiveHandler<message::Wrapper>([client](const message::Wrapper& message, std::error_code ec) {
-	std::cout << message.text() << "\n";
+    std::cout << message.text() << "\n";
 });
 
 client->setConnectHandler([&](std::error_code ec) {
