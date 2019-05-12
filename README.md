@@ -50,25 +50,25 @@ auto server = Server::create();
 // Data is called from the server's internal thread, data Therefore need to be
 // protected.
 server->setConnectHandler([&](const RemoteClientPtr& remoteClientPtr) {
-	std::cout << "New Connection\n";	
+    std::cout << "New Connection\n";	
 
-	remoteClientPtr->setReceiveHandler<message::Wrapper>([](const message::Wrapper& wrapper, std::error_code ec) {
-		std::cout << wrapper.text() << "\n";
-	});
+    remoteClientPtr->setReceiveHandler<message::Wrapper>([](const message::Wrapper& wrapper, std::error_code ec) {
+        std::cout << wrapper.text() << "\n";
+    });
 
-	remoteClientPtr->setDisconnectHandler([](std::error_code ec) {
-		std::cout << "Disconnected\n";
-	});
+    remoteClientPtr->setDisconnectHandler([](std::error_code ec) {
+        std::cout << "Disconnected\n";
+    });
 });
 
 ... // Some code.
 
 // Start listening to incomming connections on port 5012
 try {
-	server->connect(5012);
+    server->connect(5012);
 } catch (asio::system_error se) {
-	std::cout << se.what() << "\n";
-	return;
+    std::cout << se.what() << "\n";
+    return;
 }
 
 ... // Some code.
@@ -83,10 +83,10 @@ server->sendToAll(wrapper);
 ... // Some code.
 
 void sendToSpecificClient(RemoteClientPtr remoteClientPtr) {
-	message::Wrapper wrapper;
-	wrapper.set_text("Hello remote client!");
+    message::Wrapper wrapper;
+    wrapper.set_text("Hello remote client!");
 
-	remoteClientPtr->send(wrapper);
+    remoteClientPtr->send(wrapper);
 }
 
 ```
@@ -108,15 +108,15 @@ client->setReceiveHandler<message::Wrapper>([client](const message::Wrapper& mes
 });
 
 client->setConnectHandler([&](std::error_code ec) {
-	if (ec) {
-		std::cout << ec.message() << "\n";
-	} else {
-		std::cout << "Jippi! Is connected to server!" << "\n";
-	}
+    if (ec) {
+        std::cout << ec.message() << "\n";
+    } else {
+        std::cout << "Jippi! Is connected to server!" << "\n";
+    }
 });
 
 client->setDisconnectHandler([&](std::error_code ec) {	
-	std::cout << "Disconnected: " << ec.message() << "\n";
+    std::cout << "Disconnected: " << ec.message() << "\n";
 });
 
 ... // Some code.
