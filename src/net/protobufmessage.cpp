@@ -10,7 +10,7 @@ namespace net {
 
 	}
 
-	ProtobufMessage::ProtobufMessage() : ProtobufMessage(0) {
+	ProtobufMessage::ProtobufMessage() {
 	}
 
 	ProtobufMessage::ProtobufMessage(size_t size) : buffer_(size + getHeaderSize()) {

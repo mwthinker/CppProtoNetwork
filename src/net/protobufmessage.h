@@ -14,11 +14,11 @@ namespace net {
 
 		ProtobufMessage(const ProtobufMessage&) = default;
 
-		ProtobufMessage(ProtobufMessage&& other) noexcept;
+		ProtobufMessage(ProtobufMessage&&) noexcept;
 
 		ProtobufMessage& operator=(const ProtobufMessage&) = default;
 
-		ProtobufMessage& operator=(ProtobufMessage&& other) noexcept;
+		ProtobufMessage& operator=(ProtobufMessage&&) noexcept;
 
 		void clear();
 
@@ -28,7 +28,7 @@ namespace net {
 			return buffer_.size();
 		}
 
-		constexpr int getHeaderSize() const {
+		constexpr int getHeaderSize() const noexcept {
 			return 2;
 		}
 
