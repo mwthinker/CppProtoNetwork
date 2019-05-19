@@ -25,8 +25,7 @@ namespace net {
 
 		LanServer(asio::io_service& ioService, int port) : socket_(ioService),
 			remoteEndpoint_(asio::ip::address_v4::broadcast(), port) {
-			//remoteEndpoint_(asio::ip::address::from_string("127.0.0.1"), port) {
-			// asio::ip::address::from_string("192.168.1.4")
+
 			std::error_code ec;
 
 			socket_.open(remoteEndpoint_.protocol(), ec);
@@ -40,10 +39,6 @@ namespace net {
 			socket_.set_option(asio::socket_base::broadcast(true), ec);
 			if (ec)
 				std::cout << ec.message() << "3\n";
-
-			//socket_.bind(remoteEndpoint_, ec);
-			if (ec)
-				std::cout << ec.message() << "4\n";
 		}
 
 		void send(const google::protobuf::MessageLite& message) {
@@ -82,11 +77,9 @@ namespace net {
 
 		LanClient(asio::io_service& ioService, int port)
 			: socket_(ioService),
-			remoteEndpoint_(asio::ip::address_v4::broadcast(), port) {
-			//remoteEndpoint_(asio::ip::address::from_string("127.0.0.1"), port) {
-		
+			remoteEndpoint_(asio::ip::address_v4::any(), port) {
+	
 			std::error_code ec;
-
 			socket_.open(remoteEndpoint_.protocol(), ec);
 			if (ec)
 				std::cout << ec.message() << "1\n";
@@ -99,9 +92,9 @@ namespace net {
 			if (ec)
 				std::cout << ec.message() << "3\n";
 
-			//socket_.bind(remoteEndpoint_, ec);
-			//if (ec)
-				//std::cout << ec.message() << "4\n";
+			socket_.bind(remoteEndpoint_, ec);
+			if (ec)
+				std::cout << ec.message() << "4\n";
 		}
 
 		void connect(const std::string& ip, int port) {
@@ -141,14 +134,17 @@ namespace net {
 
 					const int headerSize = 2;
 					int protoSize = recvBuffer_[0] * 256 + recvBuffer_[1];
-					std::cout << "Message: " << bytesTransferred << std::endl;
+
 					if (bytesTransferred != headerSize + protoSize) {
 						recvBuffer_[0] = 0;
 						recvBuffer_[1] = 0;
 						receiveHandler_(recvBuffer_.data(), 0, make_error_code(Error::MESSAGE_MAX_SIZE));
+
+						asyncReceive();
 						return;
 					}
 					receiveHandler_(recvBuffer_.data() + headerSize, protoSize, make_error_code(Error::NONE));
+					asyncReceive();
 				});
 		}
 		

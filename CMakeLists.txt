@@ -35,7 +35,7 @@ set(SOURCES
 add_library(CppProtoNetwork ${SOURCES})
 
 find_package(Threads REQUIRED)
-find_package(protobuf CONFIG REQUIRED)
+find_package(Protobuf CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
 # ASIO non-boost version.
