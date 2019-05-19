@@ -65,6 +65,7 @@ namespace net {
 		asio::ip::tcp::socket socket_;
 		asio::ip::tcp::acceptor acceptor_;
 		std::vector<RemoteClientPtr> clients_;
+
 		std::mutex mutex_;
 		std::thread thread_;
 	};

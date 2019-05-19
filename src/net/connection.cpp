@@ -45,7 +45,7 @@ namespace net {
 		disconnect(make_error_code(Error::NONE));
 	}
 
-	void Connection::setDisconnectHandler(const DisconnectHandler& disconnectHandler) {
+	void Connection::setDisconnectHandler(DisconnectHandler&& disconnectHandler) {
 		disconnectHandler_ = disconnectHandler;
 	}
 

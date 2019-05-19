@@ -35,9 +35,9 @@ namespace net {
 		}
 		
 		template <class Message>
-		void setReceiveHandler(const ReceiveHandler<Message>& receiveHandler) {
+		void setReceiveHandler(ReceiveHandler<Message>&& receiveHandler) {
 			if (!active_) {
-				connection_.setReceiveHandler<Message>(receiveHandler);
+				connection_.setReceiveHandler<Message>(std::forward<ReceiveHandler<Message>>(receiveHandler));
 			}
 		}
 

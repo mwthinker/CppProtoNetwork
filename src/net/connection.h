@@ -41,12 +41,12 @@ namespace net {
 		void send(const google::protobuf::MessageLite& message);
 
 		template <typename Message>
-		void setReceiveHandler(const ReceiveHandler<Message>& messageHandler) {
+		void setReceiveHandler(ReceiveHandler<Message>&& messageHandler) {
 			static_assert(std::is_base_of<google::protobuf::MessageLite, Message>::value,
 				"template type must have google::protobuf::MessageLite as base class");
 
 			Message protocolMessage;
-			receiveHandler_ = [protocolMessage, messageHandler]
+			receiveHandler_ = [protocolMessage, messageHandler = std::forward<ReceiveHandler<Message>>(messageHandler)]
 			(const net::ProtobufMessage& message, std::error_code ec) mutable {
 				protocolMessage.Clear();
 				if (ec) {
@@ -62,7 +62,7 @@ namespace net {
 			};
 		}
 
-		void setDisconnectHandler(const DisconnectHandler& disconnectHandler);
+		void setDisconnectHandler(DisconnectHandler&& disconnectHandler);
 
 		void readHeader();
 

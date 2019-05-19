@@ -1,5 +1,6 @@
 #include <net/server.h>
 #include <net/client.h>
+#include <net/lanclient.h>
 
 #include <message.pb.h>
 
@@ -84,8 +85,8 @@ void runClient() {
 	std::atomic<bool> connected = false;
 	std::mutex mutex;
 	std::condition_variable cv;
-	
-	client->setReceiveHandler<message::Wrapper>([client](const message::Wrapper& message, std::error_code ec) {
+
+	client->setReceiveHandler<message::Wrapper>([](const message::Wrapper& message, std::error_code ec) {
 		std::cout << message.text() << "\n";
 	});
 
@@ -127,12 +128,63 @@ void runClient() {
 	}
 }
 
+void broadCast(std::system_error se, LanServer& lanServer, asio::steady_timer& timer) {
+	static int tmp = 0;
+	++tmp;
+	message::Wrapper wrapper;
+	wrapper.set_text(std::to_string(tmp));
+	std::cout << "Sending message: " << wrapper.text() << std::endl;
+
+	lanServer.send(wrapper);
+	timer.expires_after(1s);
+	timer.async_wait([&](std::system_error se) {
+		broadCast(se, lanServer, timer);
+	});
+}
+
+void broadCast(LanServer& lanServer, asio::steady_timer& timer) {
+	timer.async_wait([&](std::system_error se) {
+		broadCast(se, lanServer, timer);
+	});
+}
+
+void runServerLan() {
+	asio::io_service ioService;
+	int port = 32012;
+	LanServer lanServer(ioService, port);
+
+	asio::steady_timer timer(ioService);
+	broadCast(lanServer, timer);
+
+	ioService.run();
+}
+
+void runClientLan() {
+
+	try {
+		asio::io_service ioService;
+		int port = 32012;
+		LanClient lanClient(ioService, port);
+
+		lanClient.setReceiveHandler<message::Wrapper>(port, [](const message::Wrapper& wrapper, std::error_code ec) {
+			std::cout << "Message: " << wrapper.text() << std::endl;
+		});
+		ioService.run();
+	} catch (std::exception e) {
+		std::cout << "Error: " << e.what() << std::endl;
+	}
+}
+
 void testNetwork(int argc, const char* argv[]) {
 	if (argc > 1) {
 		if (strcmp(argv[1], "-s") == 0) {
 			runServer();
 		} else if (strcmp(argv[1], "-c") == 0) {
 			runClient();
+		} else if (strcmp(argv[1], "-ss") == 0) {
+			runServerLan();
+		} else if (strcmp(argv[1], "-cc") == 0) {
+			runClientLan();
 		}
 	} else {
 		runServer();
