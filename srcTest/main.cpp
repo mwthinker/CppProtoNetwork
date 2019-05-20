@@ -162,13 +162,17 @@ void runServerLan() {
 void runClientLan() {
 
 	try {
-		asio::io_service ioService;
+		asio::io_service ioService;		
+		LanClient lanClient(ioService);
+
 		int port = 32012;
-		LanClient lanClient(ioService, port);
 
 		lanClient.setReceiveHandler<message::Wrapper>(port, [](const message::Wrapper& wrapper, std::error_code ec) {
 			std::cout << "Message: " << wrapper.text() << std::endl;
 		});
+
+		lanClient.connect(32012);
+
 		ioService.run();
 	} catch (std::exception e) {
 		std::cout << "Error: " << e.what() << std::endl;

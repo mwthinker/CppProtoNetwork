@@ -17,6 +17,7 @@ namespace net {
 	enum class Error {
 		NONE,
 		MESSAGE_MAX_SIZE,
+		MESSAGE_INCORRECT_SIZE,
 		PROTOBUF_PROTOCOL_ERROR
 	};
 

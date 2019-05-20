@@ -26,6 +26,8 @@ namespace net {
 		switch (static_cast<Error>(ev)) {
 			case Error::MESSAGE_MAX_SIZE:
 				return "received message to big";
+			case Error::MESSAGE_INCORRECT_SIZE:
+				return "received message differs from received size";
 			case Error::PROTOBUF_PROTOCOL_ERROR:
 				return "protobuf protocol error";
 			default:

@@ -34,6 +34,8 @@ namespace net {
 
 		void reserveBodySize();
 
+		void reserveBodySize(size_t size);
+
 		int getBodySize() const;
 
 		const char* getData() const {

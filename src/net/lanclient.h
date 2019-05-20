@@ -75,29 +75,39 @@ namespace net {
 		~LanClient() {
 		}
 
-		LanClient(asio::io_service& ioService, int port)
-			: socket_(ioService),
-			remoteEndpoint_(asio::ip::address_v4::any(), port) {
-	
-			std::error_code ec;
-			socket_.open(remoteEndpoint_.protocol(), ec);
-			if (ec)
-				std::cout << ec.message() << "1\n";
-
-			std::cout << remoteEndpoint_.address() << ": " << remoteEndpoint_.port() << " : " << "        11\n";
-			socket_.set_option(asio::socket_base::reuse_address(true), ec);
-			if (ec)
-				std::cout << ec.message() << "2\n";
-			socket_.set_option(asio::socket_base::broadcast(true), ec);
-			if (ec)
-				std::cout << ec.message() << "3\n";
-
-			socket_.bind(remoteEndpoint_, ec);
-			if (ec)
-				std::cout << ec.message() << "4\n";
+		LanClient(asio::io_service& ioService, size_t maxSize = 1024)
+			: socket_(ioService), maxSize_(maxSize), /*recvBuffer_(maxSize),*/ active_(true) {
+			
 		}
 
-		void connect(const std::string& ip, int port) {
+		std::error_code connect(unsigned short port) {
+			remoteEndpoint_ = { asio::ip::address_v4::any(), port };
+
+			std::error_code ec;
+			socket_.open(remoteEndpoint_.protocol(), ec);
+			if (ec) {
+				return ec;
+			}
+
+			//std::cout << remoteEndpoint_.address() << ": " << remoteEndpoint_.port() << " : " << "        11\n";
+			
+			socket_.set_option(asio::socket_base::reuse_address(true), ec);
+			if (ec) {
+				return ec;
+			}
+			socket_.set_option(asio::socket_base::broadcast(true), ec);
+			if (ec) {
+				return ec;
+			}			
+
+			socket_.bind(remoteEndpoint_, ec);
+
+			if (!ec) {
+				active_ = true;
+				asyncReceive();
+			}
+
+			return ec;
 		}
 		
 		template <class Message>
@@ -107,12 +117,12 @@ namespace net {
 
 			Message protocolMessage;
 			receiveHandler_ = [protocolMessage, messageHandler = std::forward<LanReceiveHandler<Message>>(receiveHandler)]
-			(char* data, int size, std::error_code ec) mutable {
+			(const ProtobufMessage& protobufMessage, std::error_code ec) mutable {
 				protocolMessage.Clear();
 				if (ec) {
 					messageHandler(protocolMessage, ec);
 				} else {
-					bool valid = protocolMessage.ParseFromArray(data, size);
+					bool valid = protocolMessage.ParseFromArray(protobufMessage.getBodyData(), protobufMessage.getBodySize());
 					if (valid) {
 						messageHandler(protocolMessage, ec);
 					} else {
@@ -120,39 +130,57 @@ namespace net {
 					}
 				}
 			};
-			
-			asyncReceive();
+		}
+
+		void disconnect() {
+			if (active_) {
+				socket_.close();
+				active_ = false;
+			}
+		}
+
+		bool isActive() const {
+			return active_;
 		}
 
 	private:
-		using InternalReceiveHandler = std::function<void(char* data, int size, std::error_code ec)>;
+		using InternalReceiveHandler = std::function<void(const ProtobufMessage& protobufMessage, std::error_code ec)>;
 
 		void asyncReceive() {
-			socket_.async_receive_from(
-				asio::buffer(recvBuffer_), remoteEndpoint_,
-				[&](std::error_code ec, std::size_t bytesTransferred) {
+			if (active_) {
+				recvBuffer_.reserveBodySize(maxSize_);
+				socket_.async_receive_from(
+					asio::buffer(recvBuffer_.getData(), recvBuffer_.getSize()), remoteEndpoint_,					
+					[&](std::error_code ec, std::size_t bytesTransferred) {
+						if (active_) {
+							recvBuffer_.reserveBodySize();
+							if (bytesTransferred != recvBuffer_.getSize()) {
+								recvBuffer_.clear();
 
-					const int headerSize = 2;
-					int protoSize = recvBuffer_[0] * 256 + recvBuffer_[1];
-
-					if (bytesTransferred != headerSize + protoSize) {
-						recvBuffer_[0] = 0;
-						recvBuffer_[1] = 0;
-						receiveHandler_(recvBuffer_.data(), 0, make_error_code(Error::MESSAGE_MAX_SIZE));
-
+								callReceivHandler(recvBuffer_, make_error_code(Error::MESSAGE_INCORRECT_SIZE));
+								asyncReceive();
+								return;
+							}
+							callReceivHandler(recvBuffer_, ec);
+						}
 						asyncReceive();
-						return;
-					}
-					receiveHandler_(recvBuffer_.data() + headerSize, protoSize, make_error_code(Error::NONE));
-					asyncReceive();
-				});
+					});
+			}
+		}
+
+		void callReceivHandler(const ProtobufMessage& protobufMessage, const std::error_code& ec) const {
+			if (receiveHandler_) {
+				receiveHandler_(protobufMessage, ec);
+			}
 		}
 		
 		asio::ip::udp::endpoint remoteEndpoint_;
 		asio::ip::udp::socket socket_;
 		InternalReceiveHandler receiveHandler_;
 		
-		std::array<char, 1024> recvBuffer_;
+		ProtobufMessage recvBuffer_;
+		size_t maxSize_;
+		bool active_;
 	};
 
 } // Namespace net.

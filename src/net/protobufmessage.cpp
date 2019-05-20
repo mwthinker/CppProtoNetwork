@@ -41,6 +41,11 @@ namespace net {
 		buffer_.resize(getHeaderSize() + getBodySize());
 	}
 
+	void ProtobufMessage::reserveBodySize(size_t size) {
+		buffer_.resize(getHeaderSize() + size);
+		defineBodySize();
+	}
+
 	int ProtobufMessage::getBodySize() const {
 		if (buffer_.empty()) {
 			return 0;
