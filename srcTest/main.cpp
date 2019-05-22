@@ -1,6 +1,6 @@
 #include <net/server.h>
 #include <net/client.h>
-#include <net/lanclient.h>
+#include <net/lanudpsender.h>
 
 #include <message.pb.h>
 
@@ -19,7 +19,7 @@ void runServer() {
 	auto server = Server::create();	
 
 	server->setConnectHandler([&](const RemoteClientPtr& remoteClientPtr) {
-		std::cout << "New Connection\n";	
+		std::cout << "New Connection\n";
 
 		remoteClientPtr->setReceiveHandler<message::Wrapper>([](const message::Wrapper& wrapper, std::error_code ec) {
 			std::cout << wrapper.text() << "\n";
