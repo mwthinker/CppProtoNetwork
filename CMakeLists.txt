@@ -23,7 +23,10 @@ set(SOURCES
 	src/net/client.h
 	src/net/connection.cpp
 	src/net/connection.h
-	src/net/lanudpsender.h
+	src/net/lanudpreceiver.cpp
+	src/net/lanudpreceiver.h
+	src/net/lanudpsender.cpp
+	src/net/lanudpsender.h	
 	src/net/protobufmessage.cpp
 	src/net/protobufmessage.h
 	src/net/remoteclient.cpp

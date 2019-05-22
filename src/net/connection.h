@@ -29,6 +29,11 @@ namespace net {
 
 	std::error_code make_error_code(Error e);
 
+	class Meta {
+	public:
+		asio::ip::udp::endpoint endpoint_;
+	};
+
 	using DisconnectHandler = std::function<void(std::error_code ec)>;
 	
 	template <class Message>
