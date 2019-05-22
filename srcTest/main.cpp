@@ -128,33 +128,21 @@ void runClient() {
 	}
 }
 
-void broadCast(std::system_error se, LanServer& lanServer, asio::steady_timer& timer) {
-	static int tmp = 0;
-	++tmp;
-	message::Wrapper wrapper;
-	wrapper.set_text(std::to_string(tmp));
-	std::cout << "Sending message: " << wrapper.text() << std::endl;
-
-	lanServer.send(wrapper);
-	timer.expires_after(1s);
-	timer.async_wait([&](std::system_error se) {
-		broadCast(se, lanServer, timer);
-	});
-}
-
-void broadCast(LanServer& lanServer, asio::steady_timer& timer) {
-	timer.async_wait([&](std::system_error se) {
-		broadCast(se, lanServer, timer);
-	});
-}
-
 void runServerLan() {
 	asio::io_service ioService;
-	int port = 32012;
-	LanServer lanServer(ioService, port);
+	LanUdpSender lanUdpSender(ioService);
+	
+	message::Wrapper wrapper;
+	wrapper.set_text("hej");
 
-	asio::steady_timer timer(ioService);
-	broadCast(lanServer, timer);
+	lanUdpSender.setMessage(wrapper);
+
+	int port = 32012;
+	auto ec = lanUdpSender.connect(port);
+	if (ec) {
+		std::cout << ec.message() << std::endl;
+		return;
+	}
 
 	ioService.run();
 }
@@ -163,16 +151,16 @@ void runClientLan() {
 
 	try {
 		asio::io_service ioService;		
-		LanClient lanClient(ioService);
+		LanUdpReceiver lanUdpReceiver(ioService);
 
 		int port = 32012;
 
-		lanClient.setReceiveHandler<message::Wrapper>(port, [](const message::Wrapper& wrapper, std::error_code ec) {
+		lanUdpReceiver.setReceiveHandler<message::Wrapper>(port, [](const Meta& meta, const message::Wrapper& wrapper, std::error_code ec) {
+			std::cout << meta.endpoint_.address() << " | " << meta.endpoint_.port() << "\n";
 			std::cout << "Message: " << wrapper.text() << std::endl;
 		});
 
-		lanClient.connect(32012);
-
+		lanUdpReceiver.connect(32012);
 		ioService.run();
 	} catch (std::exception e) {
 		std::cout << "Error: " << e.what() << std::endl;
