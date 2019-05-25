@@ -17,47 +17,15 @@ namespace net {
 
 	class LanUdpReceiver {
 	public:
-		~LanUdpReceiver() {
-		}
+		~LanUdpReceiver();
 
-		LanUdpReceiver(asio::io_service& ioService, size_t maxSize = 1024)
-			: socket_(ioService), maxSize_(maxSize), recvBuffer_(maxSize), active_(false) {
-			
-		}
+		LanUdpReceiver(asio::io_service& ioService, size_t maxSize = 1024);
 
-		std::error_code connect(unsigned short port) {
-			if (active_) {
-				return std::error_code();
-			}
-			
-			std::lock_guard<std::mutex> lock(mutex_);
-			remoteEndpoint_ = { asio::ip::address_v4::any(), port };
-
-			std::error_code ec;
-			socket_.open(remoteEndpoint_.protocol(), ec);
-			if (ec) {
-				return ec;
-			}
-			
-			socket_.set_option(asio::socket_base::reuse_address(true), ec);
-			if (ec) {
-				return ec;
-			}
-
-			socket_.bind(remoteEndpoint_, ec);
-			
-			if (!ec) {
-				active_ = true;
-				asyncReceive();
-			}
-
-			return ec;
-		}
+		std::error_code connect(unsigned short port);
 		
 		template <class Message>
 		void setReceiveHandler(int port, LanReceiveHandler<Message>&& receiveHandler) {
-			static_assert(std::is_base_of<google::protobuf::MessageLite, Message>::value,
-				"template type must have google::protobuf::MessageLite as base class");
+			IS_BASE_OF_MESSAGELITE<Message>();
 
 			std::lock_guard<std::mutex> lock(mutex_);
 			Message protocolMessage;
@@ -77,50 +45,16 @@ namespace net {
 			};
 		}
 
-		void disconnect() {
-			if (active_) {
-				std::lock_guard<std::mutex> lock(mutex_);
-				socket_.close();
-				active_ = false;
-			}
-		}
+		void disconnect();
 
-		bool isActive() const {
-			return active_;
-		}
+		bool isActive() const;
 
 	private:
 		using InternalReceiveHandler = std::function<void(const Meta& meta, const ProtobufMessage& protobufMessage, std::error_code ec)>;
 
-		void asyncReceive() {
-			if (active_) {
-				recvBuffer_.reserveBodySize(maxSize_);
-				socket_.async_receive_from(
-					asio::buffer(recvBuffer_.getData(), recvBuffer_.getSize()), remoteEndpoint_,					
-					[&](std::error_code ec, std::size_t bytesTransferred) {
-						Meta meta { remoteEndpoint_ };
+		void asyncReceive();
 
-						if (active_) {
-							recvBuffer_.reserveBodySize();
-							if (bytesTransferred != recvBuffer_.getSize()) {
-								recvBuffer_.clear();
-
-								callReceivHandler(meta, recvBuffer_, make_error_code(Error::MESSAGE_INCORRECT_SIZE));
-								asyncReceive();
-								return;
-							}
-							callReceivHandler(meta, recvBuffer_, ec);
-						}
-						asyncReceive();
-					});
-			}
-		}
-
-		void callReceivHandler(const Meta& meta, const ProtobufMessage& protobufMessage, const std::error_code& ec) const {
-			if (receiveHandler_) {
-				receiveHandler_(meta, protobufMessage, ec);
-			}
-		}
+		void callReceivHandler(const Meta& meta, const ProtobufMessage& protobufMessage, const std::error_code& ec) const;
 		
 		asio::ip::udp::endpoint remoteEndpoint_;
 		asio::ip::udp::socket socket_;

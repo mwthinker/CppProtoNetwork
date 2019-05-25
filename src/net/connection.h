@@ -39,6 +39,12 @@ namespace net {
 	template <class Message>
 	using ReceiveHandler = std::function<void(const Message& message, std::error_code ec)>;
 
+	template <class Message>
+	constexpr void IS_BASE_OF_MESSAGELITE() {
+		static_assert(std::is_base_of<google::protobuf::MessageLite, Message>::value,
+			"template type must have google::protobuf::MessageLite as base class");
+	}
+
 	class Connection {
 	public:
 		Connection(asio::ip::tcp::socket socket);
@@ -48,8 +54,7 @@ namespace net {
 
 		template <typename Message>
 		void setReceiveHandler(ReceiveHandler<Message>&& messageHandler) {
-			static_assert(std::is_base_of<google::protobuf::MessageLite, Message>::value,
-				"template type must have google::protobuf::MessageLite as base class");
+			IS_BASE_OF_MESSAGELITE<Message>();
 
 			Message protocolMessage;
 			receiveHandler_ = [protocolMessage, messageHandler = std::forward<ReceiveHandler<Message>>(messageHandler)]

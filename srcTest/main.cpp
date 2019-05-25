@@ -11,7 +11,6 @@
 #include <atomic>
 #include <string>
 
-using namespace std::literals::chrono_literals;
 using namespace net;
 using namespace std::chrono_literals;
 
@@ -186,5 +185,6 @@ void testNetwork(int argc, const char* argv[]) {
 
 int main(int argc, const char* argv[]) {
 	testNetwork(argc, argv);
+
 	return 0;
 }
