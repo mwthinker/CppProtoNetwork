@@ -16,7 +16,7 @@ namespace net {
 	public:
 		~LanUdpSender();
 
-		LanUdpSender(asio::io_service& ioService, size_t maxSize = 1024);
+		LanUdpSender(asio::io_context& ioContext, size_t maxSize = 1024);
 
 		void disconnect();
 

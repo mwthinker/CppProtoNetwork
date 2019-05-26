@@ -45,6 +45,7 @@ find_package(spdlog CONFIG REQUIRED)
 target_compile_definitions(CppProtoNetwork
 	PUBLIC
 		ASIO_STANDALONE
+		ASIO_NO_DEPRECATED
 )
 
 if (MSVC)

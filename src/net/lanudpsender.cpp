@@ -8,15 +8,15 @@ namespace net {
 	LanUdpSender::~LanUdpSender() {
 	}
 
-	LanUdpSender::LanUdpSender(asio::io_service& ioService, size_t maxSize) : socket_(ioService),
-		protobufMessage_(maxSize), maxSize_(maxSize), timer_(ioService),
+	LanUdpSender::LanUdpSender(asio::io_context& ioContext, size_t maxSize) : socket_(ioContext),
+		protobufMessage_(maxSize), maxSize_(maxSize), timer_(ioContext),
 		active_(false), duration_(1s) {
 	}
 
 	void LanUdpSender::disconnect() {
 		if (active_) {
 			std::lock_guard<std::mutex> lock(mutex_);
-			timer_.expires_from_now();
+			timer_.expires_after(duration_);
 			socket_.close();
 			active_ = false;
 		}
@@ -48,7 +48,8 @@ namespace net {
 		if (ec) {
 			return ec;
 		}
-		if (socket_.set_option(asio::socket_base::broadcast(true), ec)) {
+		socket_.set_option(asio::socket_base::broadcast(true), ec);
+		if (ec) {
 			return ec;
 		}
 

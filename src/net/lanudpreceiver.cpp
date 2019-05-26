@@ -5,8 +5,8 @@ namespace net {
 	LanUdpReceiver::~LanUdpReceiver() {
 	}
 
-	LanUdpReceiver::LanUdpReceiver(asio::io_service& ioService, size_t maxSize)
-		: socket_(ioService), maxSize_(maxSize), recvBuffer_(maxSize), active_(false) {
+	LanUdpReceiver::LanUdpReceiver(asio::io_context& ioContext, size_t maxSize)
+		: socket_(ioContext), maxSize_(maxSize), recvBuffer_(maxSize), active_(false) {
 
 	}
 

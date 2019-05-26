@@ -19,12 +19,12 @@ namespace net {
 	public:
 		~LanUdpReceiver();
 
-		LanUdpReceiver(asio::io_service& ioService, size_t maxSize = 1024);
+		LanUdpReceiver(asio::io_context& ioContext, size_t maxSize = 1024);
 
 		std::error_code connect(unsigned short port);
 		
 		template <class Message>
-		void setReceiveHandler(int port, LanReceiveHandler<Message>&& receiveHandler) {
+		void setReceiveHandler(LanReceiveHandler<Message>&& receiveHandler) {
 			IS_BASE_OF_MESSAGELITE<Message>();
 
 			std::lock_guard<std::mutex> lock(mutex_);

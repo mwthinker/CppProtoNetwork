@@ -129,8 +129,8 @@ void runClient() {
 }
 
 void runServerLan() {
-	asio::io_service ioService;
-	LanUdpSender lanUdpSender(ioService);
+	asio::io_context ioContext;
+	LanUdpSender lanUdpSender(ioContext);
 	
 	message::Wrapper wrapper;
 	wrapper.set_text("hej");
@@ -144,24 +144,24 @@ void runServerLan() {
 		return;
 	}
 
-	ioService.run();
+	ioContext.run();
 }
 
 void runClientLan() {
 
 	try {
-		asio::io_service ioService;		
-		LanUdpReceiver lanUdpReceiver(ioService);
+		asio::io_context ioContext;
+		LanUdpReceiver lanUdpReceiver(ioContext);
 
 		int port = 32012;
 
-		lanUdpReceiver.setReceiveHandler<message::Wrapper>(port, [](const Meta& meta, const message::Wrapper& wrapper, std::error_code ec) {
+		lanUdpReceiver.setReceiveHandler<message::Wrapper>([](const Meta& meta, const message::Wrapper& wrapper, std::error_code ec) {
 			std::cout << meta.endpoint_.address() << " | " << meta.endpoint_.port() << "\n";
 			std::cout << "Message: " << wrapper.text() << std::endl;
 		});
 
-		lanUdpReceiver.connect(32012);
-		ioService.run();
+		lanUdpReceiver.connect(port);
+		ioContext.run();
 	} catch (std::exception e) {
 		std::cout << "Error: " << e.what() << std::endl;
 	}
