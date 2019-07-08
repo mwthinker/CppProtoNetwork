@@ -47,7 +47,7 @@ namespace net {
 
 	class Connection {
 	public:
-		Connection(asio::ip::tcp::socket socket);
+		Connection(std::mutex& mutex, asio::ip::tcp::socket socket);
 		~Connection();
 
 		void send(const google::protobuf::MessageLite& message);
@@ -83,6 +83,10 @@ namespace net {
 			return socket_;
 		}
 
+		std::mutex& getMutex() const {
+			return mutex_;
+		}
+
 	private:
 		using InternalReceiveHandler = std::function<void(const ProtobufMessage& message, std::error_code ec)>;
 
@@ -94,6 +98,7 @@ namespace net {
 		DisconnectHandler disconnectHandler_;
 		ProtobufMessageQueue sendBuffer_;
 		net::ProtobufMessage receiveMessage_;
+		std::mutex& mutex_;
 	};
 
 } // Namespace net.

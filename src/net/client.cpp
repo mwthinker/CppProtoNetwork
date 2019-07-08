@@ -11,7 +11,7 @@ using asio::ip::tcp;
 
 namespace net {
 
-	Client::Client() : connection_(asio::ip::tcp::socket(ioService_)), active_(false) {
+	Client::Client() : connection_(mutex_, asio::ip::tcp::socket(ioContext_)), active_(false) {
 		GOOGLE_PROTOBUF_VERIFY_VERSION;
 	}
 
@@ -23,12 +23,14 @@ namespace net {
 	void Client::connect(const std::string& ip, int port) {
 		if (!active_) {
 			active_ = true;
-			asio::ip::tcp::endpoint endpoint(ip::address::from_string(ip), port);
-			tcp::resolver resolver(ioService_);
-			tcp::resolver::iterator endpoint_iterator = resolver.resolve(endpoint);
+			std::vector<tcp::endpoint> endpointSequence = {
+				{ ip::make_address_v4("146.20.110.250"), 80 }
+			};
 
-			asio::async_connect(connection_.getSocket(), endpoint_iterator,
-				[keapAlive = shared_from_this()](std::error_code ec, tcp::resolver::iterator) {
+			tcp::resolver resolver(ioContext_);
+
+			asio::async_connect(connection_.getSocket(), endpointSequence,
+				[keapAlive = shared_from_this()](const std::error_code& ec, const tcp::endpoint& ep) {
 
 				if (keapAlive->connectHandler_) {
 					keapAlive->connectHandler_(ec);
@@ -40,7 +42,7 @@ namespace net {
 				}
 			});
 			thread_ = std::thread([keapAlive = shared_from_this()]() {
-				keapAlive->ioService_.run();
+				keapAlive->ioContext_.run();
 			});
 		}
 	}
@@ -75,7 +77,7 @@ namespace net {
 
 	void Client::close() {
 		if (active_) {
-			ioService_.stop();
+			ioContext_.stop();
 			active_ = false;
 		}
 	}

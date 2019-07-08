@@ -61,7 +61,7 @@ namespace net {
 		int port_;
 		std::atomic<bool> active_;
 		std::atomic<bool> allowConnections_;
-		asio::io_service ioService_;
+		asio::io_context ioContext_;
 		asio::ip::tcp::socket socket_;
 		asio::ip::tcp::acceptor acceptor_;
 		std::vector<RemoteClientPtr> clients_;

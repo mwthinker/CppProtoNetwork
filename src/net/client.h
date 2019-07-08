@@ -46,11 +46,12 @@ namespace net {
 
 		void close();
 
-		asio::io_service ioService_;
+		asio::io_context ioContext_;
 		Connection connection_;
 		ConnectHandler connectHandler_;
 		std::atomic<bool> active_;
 		std::thread thread_;
+		std::mutex mutex_;
 	};
 
 } // Namespace net.

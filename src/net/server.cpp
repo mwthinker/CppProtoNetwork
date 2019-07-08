@@ -9,9 +9,9 @@ namespace net {
 		return std::shared_ptr<Server>(new Server);
 	}
 
-	Server::Server() : socket_(ioService_),
+	Server::Server() : socket_(ioContext_),
 		closeConnection_(false), allowConnections_(false),
-		acceptor_(ioService_), port_(0), active_(false) {
+		acceptor_(ioContext_), port_(0), active_(false) {
 		
 		GOOGLE_PROTOBUF_VERIFY_VERSION;
 	}
@@ -25,7 +25,7 @@ namespace net {
 			active_ = true;
 			port_ = port;
 			try {
-				acceptor_ = asio::ip::tcp::acceptor(ioService_, tcp::endpoint(tcp::v4(), port), false);
+				acceptor_ = asio::ip::tcp::acceptor(ioContext_, tcp::endpoint(tcp::v4(), port), false);
 				allowConnections_ = true;
 			} catch (asio::system_error e) {
 				active_ = false;
@@ -33,7 +33,7 @@ namespace net {
 			}
 			thread_ = std::thread([keapAlive = shared_from_this()]() {
 				keapAlive->doAccept();
-				keapAlive->ioService_.run();
+				keapAlive->ioContext_.run();
 			});
 		}
 	}
@@ -46,7 +46,7 @@ namespace net {
 			}
 			clients_.clear();
 
-			ioService_.stop();
+			ioContext_.stop();
 			thread_.join();
 			active_ = false;
 		}
@@ -80,7 +80,7 @@ namespace net {
 	void Server::doAccept() {
 		acceptor_.async_accept(socket_, [keapAlive = shared_from_this()](std::error_code ec) {
 			if (!ec && keapAlive->allowConnections_) {
-				auto remoteClient = RemoteClient::create(std::move(keapAlive->socket_), keapAlive);
+				auto remoteClient = RemoteClient::create(keapAlive->mutex_, std::move(keapAlive->socket_), keapAlive);
 				keapAlive->clients_.push_back(remoteClient);
 
 				if (keapAlive->connectHandler_) {
