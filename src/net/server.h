@@ -28,7 +28,7 @@ namespace net {
 
 		static std::shared_ptr<Server> create();
 
-		void connect(int port);
+		void connect(unsigned short port);
 
 		void disconnect();
 
@@ -56,11 +56,7 @@ namespace net {
 		void doAccept();
 
 		ServerConnectHandler connectHandler_;
-
-		bool closeConnection_;
-		int port_;
-		std::atomic<bool> active_;
-		std::atomic<bool> allowConnections_;
+				
 		asio::io_context ioContext_;
 		asio::ip::tcp::socket socket_;
 		asio::ip::tcp::acceptor acceptor_;
@@ -68,6 +64,11 @@ namespace net {
 
 		std::mutex mutex_;
 		std::thread thread_;
+
+		std::atomic<bool> active_{false};
+		std::atomic<bool> allowConnections_{false};
+		bool closeConnection_{false};
+		int port_{0};
 	};
 
 } // Namespace net.

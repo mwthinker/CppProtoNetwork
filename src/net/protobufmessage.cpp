@@ -17,7 +17,7 @@ namespace net {
 		defineBodySize();
 	}
 
-	ProtobufMessage::ProtobufMessage(ProtobufMessage&& other) noexcept : buffer_(std::move(other.buffer_)) {
+	ProtobufMessage::ProtobufMessage(ProtobufMessage&& other) noexcept : buffer_{std::move(other.buffer_)} {
 	}
 
 	ProtobufMessage& ProtobufMessage::operator=(ProtobufMessage&& other) noexcept {

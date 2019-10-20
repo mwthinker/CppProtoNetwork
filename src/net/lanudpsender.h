@@ -33,10 +33,10 @@ namespace net {
 		asio::ip::udp::socket socket_;
 		ProtobufMessage protobufMessage_;
 		asio::steady_timer timer_;
-		bool active_;
 		mutable std::mutex mutex_;
-		std::chrono::seconds duration_;
-		size_t maxSize_;
+		std::chrono::seconds duration_{1};
+		size_t maxSize_{1024};
+		bool active_{false};
 	};
 
 } // Namespace net.

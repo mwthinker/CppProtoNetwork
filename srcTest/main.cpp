@@ -82,7 +82,7 @@ void runClient() {
 
 	auto client = Client::create();
 
-	std::atomic<bool> connected = false;
+	std::atomic<bool> connected{false};
 	std::mutex mutex;
 	std::condition_variable cv;
 
@@ -96,7 +96,7 @@ void runClient() {
 	});
 	
 	client->setConnectHandler([&](std::error_code ec) {
-		std::lock_guard<std::mutex> lock(mutex);
+		std::lock_guard<std::mutex> lock{mutex};
 		if (ec) {
 			std::cout << ec.message() << "\n";
 			connected = false;
@@ -106,7 +106,7 @@ void runClient() {
 		cv.notify_all();
 	});
 
-	std::unique_lock<std::mutex> lock(mutex);
+	std::unique_lock<std::mutex> lock{mutex};
 	client->connect("127.0.0.1", 5012);
 	cv.wait(lock);
 	
@@ -130,14 +130,14 @@ void runClient() {
 
 void runServerLan() {
 	asio::io_context ioContext;
-	LanUdpSender lanUdpSender(ioContext);
+	LanUdpSender lanUdpSender{ioContext};
 	
 	message::Wrapper wrapper;
 	wrapper.set_text("hej");
 
 	lanUdpSender.setMessage(wrapper);
 
-	int port = 32012;
+	int port{32012};
 	auto ec = lanUdpSender.connect(port);
 	if (ec) {
 		std::cout << ec.message() << std::endl;
@@ -151,9 +151,9 @@ void runClientLan() {
 
 	try {
 		asio::io_context ioContext;
-		LanUdpReceiver lanUdpReceiver(ioContext);
+		LanUdpReceiver lanUdpReceiver{ioContext};
 
-		int port = 32012;
+		int port{32012};
 
 		lanUdpReceiver.setReceiveHandler<message::Wrapper>([](const Meta& meta, const message::Wrapper& wrapper, std::error_code ec) {
 			std::cout << meta.endpoint_.address() << " | " << meta.endpoint_.port() << "\n";

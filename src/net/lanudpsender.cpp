@@ -8,14 +8,13 @@ namespace net {
 	LanUdpSender::~LanUdpSender() {
 	}
 
-	LanUdpSender::LanUdpSender(asio::io_context& ioContext, size_t maxSize) : socket_(ioContext),
-		protobufMessage_(maxSize), maxSize_(maxSize), timer_(ioContext),
-		active_(false), duration_(1s) {
+	LanUdpSender::LanUdpSender(asio::io_context& ioContext, size_t maxSize) : socket_{ioContext},
+		protobufMessage_{maxSize}, maxSize_{maxSize}, timer_{ioContext} {
 	}
 
 	void LanUdpSender::disconnect() {
 		if (active_) {
-			std::lock_guard<std::mutex> lock(mutex_);
+			std::lock_guard<std::mutex> lock{mutex_};
 			timer_.expires_after(duration_);
 			socket_.close();
 			active_ = false;
@@ -27,16 +26,16 @@ namespace net {
 	}
 
 	void LanUdpSender::setMessage(const google::protobuf::MessageLite& message) {
-		std::lock_guard<std::mutex> lock(mutex_);
+		std::lock_guard<std::mutex> lock{mutex_};
 		protobufMessage_.setBuffer(message);
 	}
 
 	std::error_code LanUdpSender::connect(unsigned short port) {
 		if (active_) {
-			return std::error_code();
+			return std::error_code{};
 		}
 
-		std::lock_guard<std::mutex> lock(mutex_);
+		std::lock_guard<std::mutex> lock{mutex_};
 		remoteEndpoint_ = {asio::ip::address_v4::broadcast(), port};
 
 		std::error_code ec;
@@ -44,11 +43,11 @@ namespace net {
 		if (ec) {
 			return ec;
 		}
-		socket_.set_option(asio::socket_base::reuse_address(true), ec);
+		socket_.set_option(asio::socket_base::reuse_address{true}, ec);
 		if (ec) {
 			return ec;
 		}
-		socket_.set_option(asio::socket_base::broadcast(true), ec);
+		socket_.set_option(asio::socket_base::broadcast{true}, ec);
 		if (ec) {
 			return ec;
 		}
@@ -70,7 +69,7 @@ namespace net {
 				}
 
 				if (active_) {
-					std::lock_guard<std::mutex> lock(mutex_);
+					std::lock_guard<std::mutex> lock{mutex_};
 					timer_.expires_after(duration_);
 					timer_.async_wait([&](std::system_error se) {
 						broadCast(se);

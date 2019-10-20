@@ -11,7 +11,7 @@ using asio::ip::tcp;
 
 namespace net {
 
-	Client::Client() : connection_(mutex_, asio::ip::tcp::socket(ioContext_)), active_(false) {
+	Client::Client() : connection_{mutex_, asio::ip::tcp::socket{ioContext_}} {
 		GOOGLE_PROTOBUF_VERIFY_VERSION;
 	}
 
@@ -27,7 +27,7 @@ namespace net {
 				{ ip::make_address_v4("146.20.110.250"), 80 }
 			};
 
-			tcp::resolver resolver(ioContext_);
+			tcp::resolver resolver{ioContext_};
 
 			asio::async_connect(connection_.getSocket(), endpointSequence,
 				[keapAlive = shared_from_this()](const std::error_code& ec, const tcp::endpoint& ep) {

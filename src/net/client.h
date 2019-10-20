@@ -49,7 +49,7 @@ namespace net {
 		asio::io_context ioContext_;
 		Connection connection_;
 		ConnectHandler connectHandler_;
-		std::atomic<bool> active_;
+		std::atomic<bool> active_{false};
 		std::thread thread_;
 		std::mutex mutex_;
 	};

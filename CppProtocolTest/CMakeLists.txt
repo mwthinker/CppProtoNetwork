@@ -13,6 +13,14 @@ set(PROTO_FILES
 protobuf_generate_cpp(PROTO_SRC PROTO_HEADER ${PROTO_FILES})
 
 add_library(CppProtocolTest ${PROTO_HEADER} ${PROTO_SRC} ${PROTO_FILES})
+if (MSVC)
+	target_compile_options(CppProtocolTest
+		PUBLIC
+			"/wd4005"
+			"/wd4251"
+			"/wd4244"
+	)
+endif ()
 
 target_include_directories(CppProtocolTest
 	PUBLIC

@@ -9,10 +9,7 @@ namespace net {
 		return std::shared_ptr<Server>(new Server);
 	}
 
-	Server::Server() : socket_(ioContext_),
-		closeConnection_(false), allowConnections_(false),
-		acceptor_(ioContext_), port_(0), active_(false) {
-		
+	Server::Server() : socket_{ioContext_},	acceptor_{ioContext_} {
 		GOOGLE_PROTOBUF_VERIFY_VERSION;
 	}
 
@@ -20,12 +17,12 @@ namespace net {
 		disconnect();
 	}
 
-	void Server::connect(int port) {
+	void Server::connect(unsigned short port) {
 		if (!active_ && port_ == 0 && !acceptor_.is_open()) {
 			active_ = true;
 			port_ = port;
 			try {
-				acceptor_ = asio::ip::tcp::acceptor(ioContext_, tcp::endpoint(tcp::v4(), port), false);
+				acceptor_ = asio::ip::tcp::acceptor{ioContext_, tcp::endpoint{tcp::v4(), port}, false};
 				allowConnections_ = true;
 			} catch (asio::system_error e) {
 				active_ = false;
@@ -97,7 +94,7 @@ namespace net {
 	}
 
 	void Server::removeClient(const RemoteClientPtr& client) {
-		std::lock_guard<std::mutex> lock(mutex_);
+		std::lock_guard<std::mutex> lock{mutex_};
 		auto it = std::find(clients_.begin(), clients_.end(), client);
 		if (it != clients_.end()) {
 			std::swap(*it, clients_.back());

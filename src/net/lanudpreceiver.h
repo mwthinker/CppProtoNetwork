@@ -27,7 +27,7 @@ namespace net {
 		void setReceiveHandler(LanReceiveHandler<Message>&& receiveHandler) {
 			IS_BASE_OF_MESSAGELITE<Message>();
 
-			std::lock_guard<std::mutex> lock(mutex_);
+			std::lock_guard<std::mutex> lock{mutex_};
 			Message protocolMessage;
 			receiveHandler_ = [protocolMessage, messageHandler = std::forward<LanReceiveHandler<Message>>(receiveHandler)]
 			(const Meta& meta, const ProtobufMessage& protobufMessage, std::error_code ec) mutable {
@@ -63,7 +63,7 @@ namespace net {
 		mutable std::mutex mutex_;
 		ProtobufMessage recvBuffer_;
 		size_t maxSize_;
-		bool active_;
+		bool active_{false};
 	};
 
 } // Namespace net.

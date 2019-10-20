@@ -6,16 +6,16 @@ namespace net {
 	}
 
 	LanUdpReceiver::LanUdpReceiver(asio::io_context& ioContext, size_t maxSize)
-		: socket_(ioContext), maxSize_(maxSize), recvBuffer_(maxSize), active_(false) {
+		: socket_{ioContext}, maxSize_{maxSize}, recvBuffer_{maxSize} {
 
 	}
 
 	std::error_code LanUdpReceiver::connect(unsigned short port) {
 		if (active_) {
-			return std::error_code();
+			return std::error_code{};
 		}
 
-		std::lock_guard<std::mutex> lock(mutex_);
+		std::lock_guard<std::mutex> lock{mutex_};
 		remoteEndpoint_ = {asio::ip::address_v4::any(), port};
 
 		std::error_code ec;
@@ -41,7 +41,7 @@ namespace net {
 
 	void LanUdpReceiver::disconnect() {
 		if (active_) {
-			std::lock_guard<std::mutex> lock(mutex_);
+			std::lock_guard<std::mutex> lock{mutex_};
 			socket_.close();
 			active_ = false;
 		}

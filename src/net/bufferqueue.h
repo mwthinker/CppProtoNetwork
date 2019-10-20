@@ -10,9 +10,9 @@ namespace net {
 	
 	class ProtobufMessageQueue {
 	public:
-		ProtobufMessageQueue();
+		ProtobufMessageQueue() = default;
 
-		ProtobufMessageQueue(size_t messageSize);
+		explicit ProtobufMessageQueue(size_t messageSize);
 
 		ProtobufMessageQueue(const ProtobufMessageQueue&) = delete;
 		ProtobufMessageQueue(ProtobufMessageQueue&&) = delete;
@@ -31,8 +31,10 @@ namespace net {
 		void setMessageSize(size_t messageSize);
 
 	private:
+		static constexpr size_t DEFAULT_MESSAGE_SIZE{512};
+
 		mutable std::mutex mutex_;
-		size_t messageSize_;
+		size_t messageSize_{DEFAULT_MESSAGE_SIZE};
 		std::queue<ProtobufMessage> buffer_;
 	};
 

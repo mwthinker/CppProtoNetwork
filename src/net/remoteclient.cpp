@@ -5,12 +5,14 @@
 
 namespace net {
 
-	std::shared_ptr<RemoteClient> RemoteClient::create(std::mutex& mutex, asio::ip::tcp::socket socket, const std::shared_ptr<Server>& server) {
-		return std::shared_ptr<RemoteClient>(new RemoteClient(mutex, std::move(socket), server));
+	std::shared_ptr<RemoteClient> RemoteClient::create(std::mutex& mutex, asio::ip::tcp::socket socket,
+		const std::shared_ptr<Server>& server) {
+		
+		return std::shared_ptr<RemoteClient>(new RemoteClient{mutex, std::move(socket), server});
 	}
 
 	RemoteClient::RemoteClient(std::mutex& mutex, asio::ip::tcp::socket socket, const std::shared_ptr<Server>& server)
-		: connection_(mutex, std::move(socket)), server_(server) {
+		: connection_{mutex, std::move(socket)}, server_{server} {
 		
 		connection_.readHeader();
 	}
@@ -24,7 +26,7 @@ namespace net {
 	}
 
 	void RemoteClient::setDisconnectHandler(DisconnectHandler&& disconnectHandler) {
-		std::lock_guard<std::mutex> lock(connection_.getMutex());
+		std::lock_guard<std::mutex> lock{connection_.getMutex()};
 		connection_.setDisconnectHandler([disconnectHandler = disconnectHandler, keapAlive = shared_from_this()](std::error_code ec) {
 			keapAlive->server_->removeClient(keapAlive->shared_from_this());
 			disconnectHandler(ec);

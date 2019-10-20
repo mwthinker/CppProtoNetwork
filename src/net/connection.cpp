@@ -40,7 +40,7 @@ namespace net {
 		return {static_cast<int>(e), connectionErrorCategory};
 	}
 
-	Connection::Connection(std::mutex& mutex, asio::ip::tcp::socket socket) : socket_(std::move(socket)), mutex_(mutex) {
+	Connection::Connection(std::mutex& mutex, asio::ip::tcp::socket socket) : socket_{std::move(socket)}, mutex_{mutex} {
 	}
 
 	Connection::~Connection() {
@@ -109,7 +109,7 @@ namespace net {
 	}
 
 	void Connection::disconnect(std::error_code ec) {
-		std::lock_guard<std::mutex> lock(mutex_);
+		std::lock_guard<std::mutex> lock{mutex_};
 		socket_.close();
 		
 		if (disconnectHandler_) {
