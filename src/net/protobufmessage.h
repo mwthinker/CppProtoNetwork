@@ -10,7 +10,7 @@ namespace net {
 	public:
 		ProtobufMessage();
 
-		ProtobufMessage(size_t size);
+		explicit ProtobufMessage(size_t size);
 
 		ProtobufMessage(const ProtobufMessage&) = default;
 
@@ -52,7 +52,7 @@ namespace net {
 
 		char* getBodyData() {
 			return buffer_.data() + getHeaderSize();
-		}		
+		}
 
 	private:
 		void reserveHeaderSize();

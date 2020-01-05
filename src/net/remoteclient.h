@@ -28,6 +28,7 @@ namespace net {
 
 	private:
 		RemoteClient(asio::ip::tcp::socket socket, const std::shared_ptr<Server>& server);
+		
 		Connection connection_;
 		std::shared_ptr<Server> server_;
 	};

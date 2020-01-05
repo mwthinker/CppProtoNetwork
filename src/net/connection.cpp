@@ -40,7 +40,8 @@ namespace net {
 		return {static_cast<int>(e), connectionErrorCategory};
 	}
 
-	Connection::Connection(asio::ip::tcp::socket socket) : socket_{std::move(socket)} {
+	Connection::Connection(asio::ip::tcp::socket socket)
+		: socket_{std::move(socket)} {
 	}
 
 	Connection::~Connection() {

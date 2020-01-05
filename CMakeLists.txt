@@ -17,6 +17,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SOURCES
+	src/net/auxiliary.h
 	src/net/bufferqueue.cpp
 	src/net/bufferqueue.h
 	src/net/client.cpp

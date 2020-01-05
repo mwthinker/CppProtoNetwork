@@ -7,8 +7,6 @@
 
 #include <iostream>
 #include <functional>
-#include <mutex>
-#include <atomic>
 #include <string>
 
 using namespace net;
@@ -110,41 +108,41 @@ void runClient() {
 }
 
 void runServerLan() {
+	std::cout << "Start server lan" << std::endl;
+
 	asio::io_context ioContext;
 	LanUdpSender lanUdpSender{ioContext};
-	
+
+	bool disconnected = false;
+	lanUdpSender.setDisconnectHandler([&](std::error_code ec) {
+		disconnected = true;
+		std::cout << ec.message() << std::endl;
+	});
+
 	message::Wrapper wrapper;
 	wrapper.set_text("hej");
-
 	lanUdpSender.setMessage(wrapper);
+	
+	lanUdpSender.connect(LAN_PORT);
 
-	int port{LAN_PORT};
-	auto ec = lanUdpSender.connect(port);
-	if (ec) {
-		std::cout << ec.message() << std::endl;
-		return;
+	while (!disconnected) {
+		ioContext.run_one();
 	}
-
-	ioContext.run();
 }
 
 void runClientLan() {
-	try {
-		asio::io_context ioContext;
-		LanUdpReceiver lanUdpReceiver{ioContext};
+	std::cout << "Start client lan" << std::endl;
 
-		int port{LAN_PORT};
+	asio::io_context ioContext;
+	LanUdpReceiver lanUdpReceiver{ioContext};
 
-		lanUdpReceiver.setReceiveHandler<message::Wrapper>([](const Meta& meta, const message::Wrapper& wrapper, std::error_code ec) {
-			std::cout << meta.endpoint_.address() << " | " << meta.endpoint_.port() << "\n";
-			std::cout << "Message: " << wrapper.text() << std::endl;
-		});
+	lanUdpReceiver.setReceiveHandler<message::Wrapper>([](const Meta& meta, const message::Wrapper& wrapper, std::error_code ec) {
+		std::cout << meta.endpoint_.address() << " | " << meta.endpoint_.port() << "\n";
+		std::cout << "Message: " << wrapper.text() << std::endl;
+	});
 
-		lanUdpReceiver.connect(port);
-		ioContext.run();
-	} catch (std::exception e) {
-		std::cout << "Error: " << e.what() << std::endl;
-	}
+	lanUdpReceiver.connect(LAN_PORT);
+	ioContext.run();
 }
 
 void testNetwork(int argc, const char* argv[]) {

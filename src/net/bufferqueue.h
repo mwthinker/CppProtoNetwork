@@ -1,5 +1,5 @@
-#ifndef CPPPROTONETWORK_NET_BUFFER_H
-#define CPPPROTONETWORK_NET_BUFFER_H
+#ifndef CPPPROTONETWORK_NET_BUFFERQUEUE_H
+#define CPPPROTONETWORK_NET_BUFFERQUEUE_H
 
 #include "protobufmessage.h"
 
@@ -34,10 +34,10 @@ namespace net {
 		static constexpr size_t DEFAULT_MESSAGE_SIZE{512};
 
 		mutable std::mutex mutex_;
-		size_t messageSize_{DEFAULT_MESSAGE_SIZE};
 		std::queue<ProtobufMessage> buffer_;
+		size_t messageSize_{DEFAULT_MESSAGE_SIZE};
 	};
 
 } // Namespace net.
 
-#endif // CPPPROTONETWORK_NET_BUFFER_H
+#endif // CPPPROTONETWORK_NET_BUFFERQUEUE_H

@@ -5,19 +5,24 @@ using namespace std::chrono_literals;
 
 namespace net {
 
-	LanUdpSender::~LanUdpSender() {
+	LanUdpSender::LanUdpSender(asio::io_context& ioContext, size_t maxSize)
+		: ioContext_{ioContext}
+		, socket_{ioContext}
+		, protobufMessage_{maxSize}
+		, maxSize_{maxSize}
+		, timer_{ioContext} {
 	}
 
-	LanUdpSender::LanUdpSender(asio::io_context& ioContext, size_t maxSize) : socket_{ioContext},
-		protobufMessage_{maxSize}, maxSize_{maxSize}, timer_{ioContext} {
+	LanUdpSender::~LanUdpSender() {
+		disconnect();
 	}
 
 	void LanUdpSender::disconnect() {
 		if (active_) {
-			std::lock_guard<std::mutex> lock{mutex_};
-			timer_.expires_after(duration_);
+			timer_.cancel();
 			socket_.close();
 			active_ = false;
+			callHandle();
 		}
 	}
 
@@ -26,38 +31,36 @@ namespace net {
 	}
 
 	void LanUdpSender::setMessage(const google::protobuf::MessageLite& message) {
-		std::lock_guard<std::mutex> lock{mutex_};
 		protobufMessage_.setBuffer(message);
 	}
 
-	std::error_code LanUdpSender::connect(unsigned short port) {
+	void LanUdpSender::connect(unsigned short port) {
 		if (active_) {
-			return std::error_code{};
+			return;
 		}
+		asio::post(ioContext_, [&]() {
+			remoteEndpoint_ = {asio::ip::address_v4::broadcast(), port};
 
-		std::lock_guard<std::mutex> lock{mutex_};
-		remoteEndpoint_ = {asio::ip::address_v4::broadcast(), port};
+			std::error_code ec;
+			socket_.open(remoteEndpoint_.protocol(), ec);
+			if (ec) {				
+				callHandle(ec);
+			}
+			socket_.set_option(asio::socket_base::reuse_address{true}, ec);
+			if (ec) {
+				callHandle(ec);
+			}
+			socket_.set_option(asio::socket_base::broadcast{true}, ec);
+			if (ec) {
+				callHandle(ec);
+			}
 
-		std::error_code ec;
-		socket_.open(remoteEndpoint_.protocol(), ec);
-		if (ec) {
-			return ec;
-		}
-		socket_.set_option(asio::socket_base::reuse_address{true}, ec);
-		if (ec) {
-			return ec;
-		}
-		socket_.set_option(asio::socket_base::broadcast{true}, ec);
-		if (ec) {
-			return ec;
-		}
-
-		active_ = true;
-		timer_.expires_after(duration_);
-		timer_.async_wait([&](std::system_error se) {
-			broadCast(se);
+			active_ = true;
+			timer_.expires_after(duration_);
+			timer_.async_wait([&](std::system_error se) {
+				broadCast(se);
+			});
 		});
-		return ec;
 	}
 
 	void LanUdpSender::broadCast(std::system_error se) {
@@ -65,17 +68,23 @@ namespace net {
 			[this, se](std::error_code ec, std::size_t length) mutable {
 
 				if (ec) {
+					callHandle(ec);
 					return;
 				}
 
 				if (active_) {
-					std::lock_guard<std::mutex> lock{mutex_};
 					timer_.expires_after(duration_);
 					timer_.async_wait([&](std::system_error se) {
 						broadCast(se);
 					});
 				}
 			});
+	}
+
+	void LanUdpSender::callHandle(const std::error_code& ec) {
+		if (disconnectHandler_) {
+			disconnectHandler_(ec);
+		}
 	}
 
 } // Namespace net.

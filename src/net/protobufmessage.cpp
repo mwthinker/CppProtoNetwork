@@ -13,11 +13,14 @@ namespace net {
 	ProtobufMessage::ProtobufMessage() {
 	}
 
-	ProtobufMessage::ProtobufMessage(size_t size) : buffer_(size + getHeaderSize()) {
+	ProtobufMessage::ProtobufMessage(size_t size)
+		: buffer_(size + getHeaderSize()) {
+
 		defineBodySize();
 	}
 
-	ProtobufMessage::ProtobufMessage(ProtobufMessage&& other) noexcept : buffer_{std::move(other.buffer_)} {
+	ProtobufMessage::ProtobufMessage(ProtobufMessage&& other) noexcept
+		: buffer_{std::move(other.buffer_)} {
 	}
 
 	ProtobufMessage& ProtobufMessage::operator=(ProtobufMessage&& other) noexcept {

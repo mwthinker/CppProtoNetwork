@@ -3,12 +3,8 @@
 
 #include "protobufmessage.h"
 #include "remoteclient.h"
-#include "remoteclient.h"
+#include "auxiliary.h"
 
-#include <asio.hpp>
-#include <google/protobuf/message_lite.h>
-
-#include <deque>
 #include <memory>
 #include <atomic>
 
