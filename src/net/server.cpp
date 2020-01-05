@@ -5,11 +5,28 @@ using asio::ip::tcp;
 
 namespace net {
 
-	std::shared_ptr<Server> Server::create() {
-		return std::shared_ptr<Server>(new Server);
+	namespace {
+
+		template<class T>
+		void removeFirstMatch(std::vector<T>& v, const T& value) {
+			auto it = std::find(v.begin(), v.end(), value);
+			if (it != v.end()) {
+				std::swap(*it, v.back());
+				v.pop_back();
+			}
+		}
+
 	}
 
-	Server::Server() : socket_{ioContext_},	acceptor_{ioContext_} {
+	std::shared_ptr<Server> Server::create(asio::io_context& ioContext) {
+		return std::shared_ptr<Server>(new Server{ioContext});
+	}
+
+	Server::Server(asio::io_context& ioContext)
+		: ioContext_{ioContext}
+		, socket_{ioContext}
+		, acceptor_{ioContext} {
+		
 		GOOGLE_PROTOBUF_VERIFY_VERSION;
 	}
 
@@ -18,35 +35,37 @@ namespace net {
 	}
 
 	void Server::connect(unsigned short port) {
-		if (!active_ && port_ == 0 && !acceptor_.is_open()) {
-			active_ = true;
-			port_ = port;
-			try {
-				acceptor_ = asio::ip::tcp::acceptor{ioContext_, tcp::endpoint{tcp::v4(), port}, false};
-				allowConnections_ = true;
-			} catch (asio::system_error e) {
-				active_ = false;
-				throw;
+		asio::post(ioContext_, [this, port]() {
+			if (!active_ && port_ == 0 && !acceptor_.is_open()) {
+				active_ = true;
+				port_ = port;
+				try {
+					acceptor_ = asio::ip::tcp::acceptor{ioContext_, tcp::endpoint{tcp::v4(), port}, false};
+					allowConnections_ = true;
+				} catch (asio::system_error e) {
+					active_ = false;
+					if (disconnectHandler_) {
+						disconnectHandler_(e);
+					}
+					return;
+				}
+
+				doAccept();
 			}
-			thread_ = std::thread([keapAlive = shared_from_this()]() {
-				keapAlive->doAccept();
-				keapAlive->ioContext_.run();
-			});
-		}
+		});
 	}
 
 	void Server::disconnect() {
-		if (active_) {
-			allowConnections_ = false;
-			for (auto& client : clients_) {
-				client->disconnect();
+		asio::post(ioContext_, [this]() {
+			if (active_) {
+				allowConnections_ = false;
+				for (auto& client : clients_) {
+					client->disconnect();
+				}
+				clients_.clear();
+				active_ = false;
 			}
-			clients_.clear();
-
-			ioContext_.stop();
-			thread_.join();
-			active_ = false;
-		}
+		});
 	}
 
 	void Server::setConnectHandler(const ServerConnectHandler& acceptionFunction) {
@@ -67,7 +86,6 @@ namespace net {
 
 	void Server::sendToAll(const google::protobuf::MessageLite& message) {
 		if (active_) {
-			std::lock_guard<std::mutex> lock(mutex_);
 			for (auto& client : clients_) {
 				client->send(message);
 			}
@@ -77,7 +95,7 @@ namespace net {
 	void Server::doAccept() {
 		acceptor_.async_accept(socket_, [keapAlive = shared_from_this()](std::error_code ec) {
 			if (!ec && keapAlive->allowConnections_) {
-				auto remoteClient = RemoteClient::create(keapAlive->mutex_, std::move(keapAlive->socket_), keapAlive);
+				auto remoteClient = RemoteClient::create(std::move(keapAlive->socket_), keapAlive);
 				keapAlive->clients_.push_back(remoteClient);
 
 				if (keapAlive->connectHandler_) {
@@ -94,12 +112,7 @@ namespace net {
 	}
 
 	void Server::removeClient(const RemoteClientPtr& client) {
-		std::lock_guard<std::mutex> lock{mutex_};
-		auto it = std::find(clients_.begin(), clients_.end(), client);
-		if (it != clients_.end()) {
-			std::swap(*it, clients_.back());
-			clients_.pop_back();
-		}
+		removeFirstMatch<RemoteClientPtr>(clients_, client);
 	}
 
 } // Namespace net.

@@ -9,9 +9,6 @@
 #include <google/protobuf/message_lite.h>
 
 #include <deque>
-#include <atomic>
-#include <mutex>
-#include <thread>
 #include <memory>
 #include <atomic>
 
@@ -26,9 +23,13 @@ namespace net {
 
 		~Server();
 
-		static std::shared_ptr<Server> create();
+		static std::shared_ptr<Server> create(asio::io_context& ioContext);
 
 		void connect(unsigned short port);
+
+		void setDisconnectHandler(ServerDisconnectHandler&& disconnectHandler) {
+			disconnectHandler_ = disconnectHandler;
+		}
 
 		void disconnect();
 
@@ -49,26 +50,23 @@ namespace net {
 		}
 		
 	private:
-		Server();
+		Server(asio::io_context& ioContext);
 
 		void removeClient(const RemoteClientPtr& client);
 
 		void doAccept();
 
+		asio::io_context& ioContext_;
 		ServerConnectHandler connectHandler_;
-				
-		asio::io_context ioContext_;
+		ServerDisconnectHandler disconnectHandler_;
 		asio::ip::tcp::socket socket_;
 		asio::ip::tcp::acceptor acceptor_;
 		std::vector<RemoteClientPtr> clients_;
 
-		std::mutex mutex_;
-		std::thread thread_;
-
 		std::atomic<bool> active_{false};
 		std::atomic<bool> allowConnections_{false};
 		bool closeConnection_{false};
-		int port_{0};
+		int port_{};
 	};
 
 } // Namespace net.

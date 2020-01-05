@@ -8,7 +8,6 @@
 #include <google/protobuf/message_lite.h>
 
 #include <atomic>
-#include <thread>
 
 namespace net {
 
@@ -18,9 +17,9 @@ namespace net {
 	public:
 		~Client();
 
-		static std::shared_ptr<Client> create();
+		static std::shared_ptr<Client> create(asio::io_context& ioContext);
 
-		void connect(const std::string& ip, int port);
+		void connect(const std::string& ip, unsigned short port);
 
 		void send(const google::protobuf::MessageLite& message);
 
@@ -42,15 +41,14 @@ namespace net {
 		}
 
 	private:
-		Client();
+		Client(asio::io_context& ioContext_);
 
 		void close();
 
-		asio::io_context ioContext_;
+		asio::io_context& ioContext_;
 		Connection connection_;
 		ConnectHandler connectHandler_;
 		std::atomic<bool> active_{false};
-		std::thread thread_;
 		std::mutex mutex_;
 	};
 

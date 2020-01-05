@@ -14,118 +14,99 @@
 using namespace net;
 using namespace std::chrono_literals;
 
+constexpr unsigned short PORT = 5013;
+const std::string LOCALHOST = "127.0.0.1";
+
+constexpr unsigned short LAN_PORT = 32012;
+
+template <class T>
+void repeatTimer(asio::steady_timer& timer, const std::chrono::seconds interval, T callback) {
+	timer.expires_after(interval);
+	timer.async_wait([&timer, interval, callback](const std::error_code& error) {
+		if (error) {
+			std::cout << "repeatTimer " << error.message() << "\n";
+			return;
+		}
+		callback();
+		::repeatTimer<T>(timer, interval, callback);
+	});
+}
+
 void runServer() {
 	std::cout << "Start server\n";
-	auto server = Server::create();	
+	asio::io_context ioContext;
 
+	auto server = Server::create(ioContext);
 	server->setConnectHandler([&](const RemoteClientPtr& remoteClientPtr) {
 		std::cout << "New Connection\n";
 
 		remoteClientPtr->setReceiveHandler<message::Wrapper>([](const message::Wrapper& wrapper, std::error_code ec) {
-			std::cout << wrapper.text() << "\n";
+			std::cout << "Received: " << wrapper.text() << std::endl;
 		});
 
 		remoteClientPtr->setDisconnectHandler([](std::error_code ec) {
-			std::cout << "Disconnected\n";
+			std::cout << "Disconnected" << std::endl;
 		});
 	});
 
 	try {
-		server->connect(5012);
+		server->connect(PORT);
 	} catch (asio::system_error se) {
 		std::cout << se.what() << "\n";
 		return;
 	}
 
-	std::cout << "Not allowing more connections: [y]\n";
-	std::cout << "Allowing more connections: [n]\n";
-	std::cout << "Exit: [x]\n";
-
 	message::Wrapper wrapper;
-
-	std::string input;
-	do {
-		std::cout << "Text: ";
-		std::getline(std::cin, input);
-
-		wrapper.Clear();
-		wrapper.set_text(input);
-
-		if (input == "y") {
-			std::cout << "Not allowing more connections\n";
-			try {
-				server->setAllowingNewConnections(false);
-			}
-			catch (asio::system_error e) {
-				std::cout << "x: "<< e.what() << "\n";
-			}
-		}
-		if (input == "n") {
-			std::cout << "Allowing more connections\n";
-			try {
-				server->setAllowingNewConnections(true);
-			}
-			catch (asio::system_error e) {
-				std::cout << "x: " << e.what() << "\n";
-			}
-		}
-		if (input == "x") {
-			break;
-		}
+	asio::steady_timer timer{ioContext};
+	int timerNbr = 0;
+	
+	repeatTimer(timer, 2s, [&timerNbr, &server]() {
+		std::stringstream stream;
+		stream << "Server DATA " << ++timerNbr << std::endl;
+		std::cout << "Send " << timerNbr <<" \n";
+		message::Wrapper wrapper;
+		wrapper.set_text(stream.str());
 		server->sendToAll(wrapper);
-	} while (!input.empty());
+	});
+
+	ioContext.run();
 }
 
 void runClient() {
-	std::cout << "Start client\n";
-	std::cout << "Exit: [x]\n";
+	std::cout << "Start client" << std::endl;
 
-	auto client = Client::create();
-
-	std::atomic<bool> connected{false};
-	std::mutex mutex;
-	std::condition_variable cv;
-
+	asio::io_context ioContext;
+	auto client = Client::create(ioContext);
+	bool connected = false;
 	client->setReceiveHandler<message::Wrapper>([](const message::Wrapper& message, std::error_code ec) {
-		std::cout << message.text() << "\n";
+		std::cout << "Received: " << message.text() << std::endl;
 	});
-
 	client->setDisconnectHandler([&](std::error_code ec) {
 		connected = false;
-		std::cout << "Disconnected: " << ec.message() << "\n";
+		std::cout << "Disconnected: " << ec.message() << std::endl;
 	});
-	
 	client->setConnectHandler([&](std::error_code ec) {
-		std::lock_guard<std::mutex> lock{mutex};
 		if (ec) {
-			std::cout << ec.message() << "\n";
+			std::cout << ec.message() << std::endl;
 			connected = false;
 		} else {
+			std::cout << "Connected" << std::endl;
 			connected = true;
 		}
-		cv.notify_all();
+	});
+	client->connect(LOCALHOST, PORT);
+
+	int timerNbr = 0;
+	asio::steady_timer timer{ioContext};
+	repeatTimer(timer, 3s, [&timerNbr, &client]() {
+		std::stringstream stream;
+		stream << "Client DATA " << ++timerNbr;
+		message::Wrapper wrapper;
+		wrapper.set_text(stream.str());
+		client->send(wrapper);
 	});
 
-	std::unique_lock<std::mutex> lock{mutex};
-	client->connect("127.0.0.1", 5012);
-	cv.wait(lock);
-	
-	if (connected) {
-		std::cout << "Connected\n";
-		std::string input;
-		do {
-			std::cout << "Text: ";
-			std::getline(std::cin, input);
-
-			message::Wrapper wrapper;
-			wrapper.set_text(input);
-
-			client->send(wrapper);
-			if (input == "x") {
-				break;
-			}
-		} while (!input.empty() && connected);
-	}
+	ioContext.run();
 }
 
 void runServerLan() {
@@ -137,7 +118,7 @@ void runServerLan() {
 
 	lanUdpSender.setMessage(wrapper);
 
-	int port{32012};
+	int port{LAN_PORT};
 	auto ec = lanUdpSender.connect(port);
 	if (ec) {
 		std::cout << ec.message() << std::endl;
@@ -148,12 +129,11 @@ void runServerLan() {
 }
 
 void runClientLan() {
-
 	try {
 		asio::io_context ioContext;
 		LanUdpReceiver lanUdpReceiver{ioContext};
 
-		int port{32012};
+		int port{LAN_PORT};
 
 		lanUdpReceiver.setReceiveHandler<message::Wrapper>([](const Meta& meta, const message::Wrapper& wrapper, std::error_code ec) {
 			std::cout << meta.endpoint_.address() << " | " << meta.endpoint_.port() << "\n";

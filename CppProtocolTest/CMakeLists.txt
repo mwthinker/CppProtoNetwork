@@ -16,9 +16,9 @@ add_library(CppProtocolTest ${PROTO_HEADER} ${PROTO_SRC} ${PROTO_FILES})
 if (MSVC)
 	target_compile_options(CppProtocolTest
 		PUBLIC
-			"/wd4005"
-			"/wd4251"
-			"/wd4244"
+			"/wd4005" # 'identifier' : macro redefinition
+			"/wd4251" # 'identifier' : class 'type' needs to have dll-interface to be used by clients of class 'type2'
+			"/wd4244" # An integer type is converted to a smaller integer type
 	)
 endif ()
 

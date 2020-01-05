@@ -11,40 +11,39 @@ using asio::ip::tcp;
 
 namespace net {
 
-	Client::Client() : connection_{mutex_, asio::ip::tcp::socket{ioContext_}} {
+	Client::Client(asio::io_context& ioContext)
+		: ioContext_{ioContext}
+		, connection_{asio::ip::tcp::socket{ioContext_}} {
+		
 		GOOGLE_PROTOBUF_VERIFY_VERSION;
 	}
 
 	Client::~Client() {
 		disconnect();
-		thread_.join();
 	}
 
-	void Client::connect(const std::string& ip, int port) {
-		if (!active_) {
-			active_ = true;
-			std::vector<tcp::endpoint> endpointSequence = {
-				{ ip::make_address_v4("146.20.110.250"), 80 }
-			};
+	void Client::connect(const std::string& ip, unsigned short port) {
+		asio::post(ioContext_, [this, ip, port]() {
+			if (!active_) {
+				active_ = true;
+				std::vector<tcp::endpoint> endpointSequence{
+					tcp::endpoint{ip::make_address_v4(ip), port}
+				};
 
-			tcp::resolver resolver{ioContext_};
+				asio::async_connect(connection_.getSocket(), endpointSequence,
+					[keapAlive = shared_from_this()](const std::error_code& ec, const tcp::endpoint& ep) {
 
-			asio::async_connect(connection_.getSocket(), endpointSequence,
-				[keapAlive = shared_from_this()](const std::error_code& ec, const tcp::endpoint& ep) {
-
-				if (keapAlive->connectHandler_) {
-					keapAlive->connectHandler_(ec);
-				}
-				if (ec) {
-					keapAlive->connection_.disconnect(ec);
-				} else {
-					keapAlive->connection_.readHeader();
-				}
-			});
-			thread_ = std::thread([keapAlive = shared_from_this()]() {
-				keapAlive->ioContext_.run();
-			});
-		}
+					if (keapAlive->connectHandler_) {
+						keapAlive->connectHandler_(ec);
+					}
+					if (ec) {
+						keapAlive->connection_.disconnect(ec);
+					} else {
+						keapAlive->connection_.readHeader();
+					}
+				});
+			}
+		});
 	}
 
 	void Client::send(const google::protobuf::MessageLite& message) {
@@ -76,14 +75,11 @@ namespace net {
 	}
 
 	void Client::close() {
-		if (active_) {
-			ioContext_.stop();
-			active_ = false;
-		}
+		active_ = false;
 	}
 
-	std::shared_ptr<Client> Client::create() {
-		return std::shared_ptr<Client>(new Client);
+	std::shared_ptr<Client> Client::create(asio::io_context& ioContext) {
+		return std::shared_ptr<Client>(new Client{ioContext});
 	}
 
 } // Namespace net.

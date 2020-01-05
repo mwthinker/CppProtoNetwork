@@ -13,7 +13,7 @@ namespace net {
 	class RemoteClient;
 	class RemoteClient : public std::enable_shared_from_this<RemoteClient> {
 	public:
-		static std::shared_ptr<RemoteClient> create(std::mutex& mutex, asio::ip::tcp::socket socket, const std::shared_ptr<Server>& server);
+		static std::shared_ptr<RemoteClient> create(asio::ip::tcp::socket socket, const std::shared_ptr<Server>& server);
 
 		void send(const google::protobuf::MessageLite& message);
 
@@ -27,7 +27,7 @@ namespace net {
 		}
 
 	private:
-		RemoteClient(std::mutex& mutex, asio::ip::tcp::socket socket, const std::shared_ptr<Server>& server);
+		RemoteClient(asio::ip::tcp::socket socket, const std::shared_ptr<Server>& server);
 		Connection connection_;
 		std::shared_ptr<Server> server_;
 	};
