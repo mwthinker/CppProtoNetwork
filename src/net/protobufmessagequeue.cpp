@@ -1,4 +1,4 @@
-#include "bufferqueue.h"
+#include "protobufmessagequeue.h"
 
 namespace net {
 

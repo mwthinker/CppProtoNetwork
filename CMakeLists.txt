@@ -22,8 +22,6 @@ set(SOURCES
 	
 	src/net/auxiliary.cpp
 	src/net/auxiliary.h
-	src/net/bufferqueue.cpp
-	src/net/bufferqueue.h
 	src/net/client.cpp
 	src/net/client.h
 	src/net/lanudpreceiver.cpp
@@ -32,6 +30,8 @@ set(SOURCES
 	src/net/lanudpsender.h	
 	src/net/protobufmessage.cpp
 	src/net/protobufmessage.h
+	src/net/protobufmessagequeue.cpp
+	src/net/protobufmessagequeue.h
 	src/net/remoteclient.cpp
 	src/net/remoteclient.h
 	src/net/server.cpp

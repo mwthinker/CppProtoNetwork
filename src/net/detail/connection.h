@@ -3,7 +3,7 @@
 
 #include <net/auxiliary.h>
 #include <net/protobufmessage.h>
-#include <net/bufferqueue.h>
+#include <net/protobufmessagequeue.h>
 
 #include <functional>
 

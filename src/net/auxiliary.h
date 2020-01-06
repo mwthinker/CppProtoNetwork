@@ -29,7 +29,7 @@ namespace net {
 	using ServerDisconnectHandler = std::function<void(std::system_error ec)>;
 
 	template <class Message>
-	using ReceiveHandler = std::function<void(const Message & message, std::error_code ec)>;
+	using ReceiveHandler = std::function<void(const Message& message, std::error_code ec)>;
 
 	template <class Message>
 	constexpr void IS_BASE_OF_MESSAGELITE() {
