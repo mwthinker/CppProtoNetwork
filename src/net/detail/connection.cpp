@@ -6,38 +6,12 @@
 #include <iostream>
 #include <queue>
 
-namespace net {
+namespace net::detail {
 
 	namespace {
 		
 		constexpr int MAX_SIZE = 1024;
 
-		const ConnectionErrorCategory connectionErrorCategory{};		
-		
-	}
-
-	const char* ConnectionErrorCategory::name() const noexcept
-	{
-		return "connection";
-	}
-
-	std::string ConnectionErrorCategory::message(int ev) const
-	{		
-		switch (static_cast<Error>(ev)) {
-			case Error::MESSAGE_MAX_SIZE:
-				return "received message to big";
-			case Error::MESSAGE_INCORRECT_SIZE:
-				return "received message differs from received size";
-			case Error::PROTOBUF_PROTOCOL_ERROR:
-				return "protobuf protocol error";
-			default:
-				return "(unrecognized error)";
-		}
-	}
-
-	std::error_code make_error_code(Error e)
-	{
-		return {static_cast<int>(e), connectionErrorCategory};
 	}
 
 	Connection::Connection(asio::ip::tcp::socket socket)
@@ -116,4 +90,4 @@ namespace net {
 		}
 	}
 
-} // Namespace net.
+} // Namespace net::detail.

@@ -1,13 +1,13 @@
-#ifndef CPPPROTONETWORK_NET_CONNECTION_H
-#define CPPPROTONETWORK_NET_CONNECTION_H
+#ifndef CPPPROTONETWORK_NET_DETAIL_CONNECTION_H
+#define CPPPROTONETWORK_NET_DETAIL_CONNECTION_H
 
-#include "protobufmessage.h"
-#include "bufferqueue.h"
-#include "auxiliary.h"
+#include <net/auxiliary.h>
+#include <net/protobufmessage.h>
+#include <net/bufferqueue.h>
 
 #include <functional>
 
-namespace net {
+namespace net::detail {
 
 	class Connection {
 	public:
@@ -62,4 +62,4 @@ namespace net {
 
 } // Namespace net.
 
-#endif // CPPPROTONETWORK_NET_CONNECTION_H
+#endif // CPPPROTONETWORK_NET_DETAIL_CONNECTION_H

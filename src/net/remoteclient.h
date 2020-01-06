@@ -2,7 +2,8 @@
 #define CPPPROTONETWORK_NET_REMOTECLIENT_H
 
 #include "protobufmessage.h"
-#include "connection.h"
+
+#include "detail/connection.h"
 
 #include <asio.hpp>
 
@@ -22,17 +23,20 @@ namespace net {
 		void setDisconnectHandler(DisconnectHandler&& disconnectHandler);
 
 		template <class Message>
-		void setReceiveHandler(ReceiveHandler<Message>&& receiveHandler) {
-			connection_.setReceiveHandler<Message>(std::forward<ReceiveHandler<Message>>(receiveHandler));
-		}
+		void setReceiveHandler(ReceiveHandler<Message>&& receiveHandler);
 
 	private:
 		RemoteClient(asio::ip::tcp::socket socket, const std::shared_ptr<Server>& server);
 		
-		Connection connection_;
+		detail::Connection connection_;
 		std::shared_ptr<Server> server_;
 	};
 
 } // Namespace net.
+
+template <class Message>
+void net::RemoteClient::setReceiveHandler(ReceiveHandler<Message>&& receiveHandler) {
+	connection_.setReceiveHandler<Message>(std::forward<ReceiveHandler<Message>>(receiveHandler));
+}
 
 #endif // CPPPROTONETWORK_NET_REMOTECLIENT_H

@@ -1,5 +1,4 @@
 #include "lanudpsender.h"
-#include "connection.h"
 
 using namespace std::chrono_literals;
 

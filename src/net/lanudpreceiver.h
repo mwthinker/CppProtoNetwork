@@ -2,8 +2,9 @@
 #define CPPPROTONETWORK_NET_LANUDPRECEIVER_H
 
 #include "protobufmessage.h"
-#include "connection.h"
 #include "auxiliary.h"
+
+#include "detail/connection.h"
 
 namespace net {
 
@@ -23,25 +24,7 @@ namespace net {
 		void connect(unsigned short port);
 		
 		template <class Message>
-		void setReceiveHandler(LanReceiveHandler<Message>&& receiveHandler) {
-			IS_BASE_OF_MESSAGELITE<Message>();
-
-			Message protocolMessage;
-			receiveHandler_ = [protocolMessage, messageHandler = std::forward<LanReceiveHandler<Message>>(receiveHandler)]
-			(const Meta& meta, const ProtobufMessage& protobufMessage, std::error_code ec) mutable {
-				protocolMessage.Clear();
-				if (ec) {
-					messageHandler(meta, protocolMessage, ec);
-				} else {
-					bool valid = protocolMessage.ParseFromArray(protobufMessage.getBodyData(), protobufMessage.getBodySize());
-					if (valid) {
-						messageHandler(meta, protocolMessage, ec);
-					} else {
-						messageHandler(meta, protocolMessage, make_error_code(Error::PROTOBUF_PROTOCOL_ERROR));
-					}
-				}
-			};
-		}
+		void setReceiveHandler(LanReceiveHandler<Message>&& receiveHandler);
 
 		void disconnect();
 
@@ -67,5 +50,26 @@ namespace net {
 	};
 
 } // Namespace net.
+
+template <class Message>
+void net::LanUdpReceiver::setReceiveHandler(LanReceiveHandler<Message>&& receiveHandler) {
+	IS_BASE_OF_MESSAGELITE<Message>();
+
+	Message protocolMessage;
+	receiveHandler_ = [protocolMessage, messageHandler = std::forward<LanReceiveHandler<Message>>(receiveHandler)]
+	(const Meta& meta, const ProtobufMessage& protobufMessage, std::error_code ec) mutable {
+		protocolMessage.Clear();
+		if (ec) {
+			messageHandler(meta, protocolMessage, ec);
+		} else {
+			bool valid = protocolMessage.ParseFromArray(protobufMessage.getBodyData(), protobufMessage.getBodySize());
+			if (valid) {
+				messageHandler(meta, protocolMessage, ec);
+			} else {
+				messageHandler(meta, protocolMessage, make_error_code(Error::PROTOBUF_PROTOCOL_ERROR));
+			}
+		}
+	};
+}
 
 #endif // CPPPROTONETWORK_NET_LANUDPRECEIVER_H

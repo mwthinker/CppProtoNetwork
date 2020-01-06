@@ -17,13 +17,15 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SOURCES
+	src/net/detail/connection.cpp
+	src/net/detail/connection.h
+	
+	src/net/auxiliary.cpp
 	src/net/auxiliary.h
 	src/net/bufferqueue.cpp
 	src/net/bufferqueue.h
 	src/net/client.cpp
 	src/net/client.h
-	src/net/connection.cpp
-	src/net/connection.h
 	src/net/lanudpreceiver.cpp
 	src/net/lanudpreceiver.h
 	src/net/lanudpsender.cpp

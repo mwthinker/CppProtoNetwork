@@ -2,8 +2,9 @@
 #define CPPPROTONETWORK_NET_LANUDPSENDER_H
 
 #include "protobufmessage.h"
-#include "connection.h"
 #include "auxiliary.h"
+
+#include "detail/connection.h"
 
 #include <functional>
 

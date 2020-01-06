@@ -2,7 +2,8 @@
 #define CPPPROTONETWORK_NET_CLIENT_H
 
 #include "protobufmessage.h"
-#include "connection.h"
+
+#include "detail/connection.h"
 
 #include <asio.hpp>
 #include <google/protobuf/message_lite.h>
@@ -34,11 +35,7 @@ namespace net {
 		}
 		
 		template <class Message>
-		void setReceiveHandler(ReceiveHandler<Message>&& receiveHandler) {
-			if (!active_) {
-				connection_.setReceiveHandler<Message>(std::forward<ReceiveHandler<Message>>(receiveHandler));
-			}
-		}
+		void setReceiveHandler(ReceiveHandler<Message>&& receiveHandler);
 
 	private:
 		Client(asio::io_context& ioContext_);
@@ -46,12 +43,19 @@ namespace net {
 		void close();
 
 		asio::io_context& ioContext_;
-		Connection connection_;
+		detail::Connection connection_;
 		ConnectHandler connectHandler_;
 		std::atomic<bool> active_{false};
 		std::mutex mutex_;
 	};
 
 } // Namespace net.
+
+template <class Message>
+void net::Client::setReceiveHandler(ReceiveHandler<Message>&& receiveHandler) {
+	if (!active_) {
+		connection_.setReceiveHandler<Message>(std::forward<ReceiveHandler<Message>>(receiveHandler));
+	}
+}
 
 #endif // CPPPROTONETWORK_NET_CLIENT_H
