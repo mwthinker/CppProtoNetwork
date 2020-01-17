@@ -16,7 +16,7 @@ project(CppProtoNetwork
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(SOURCES
+add_library(CppProtoNetwork
 	src/net/detail/connection.cpp
 	src/net/detail/connection.h
 	
@@ -37,8 +37,6 @@ set(SOURCES
 	src/net/server.cpp
 	src/net/server.h
 )
-
-add_library(CppProtoNetwork ${SOURCES})
 
 find_package(Threads REQUIRED)
 find_package(Protobuf CONFIG REQUIRED)
@@ -71,28 +69,8 @@ target_link_libraries(CppProtoNetwork
 		protobuf::libprotobuf
 )
 
-message(STATUS "CppProtoNetworkTest is available to add: -DCppProtoNetworkTest=1")
-option(CppProtoNetworkTest "Add CppProtoNetworkTest project." OFF)
-
-if (CppProtoNetworkTest)
-	# Generated code for protobuf from *.proto files
-	add_subdirectory(CppProtocolTest)
-
-	set(SOURCES_TEST
-		srcTest/main.cpp
-	)
-
-	add_executable(CppProtoNetworkTest ${SOURCES_TEST})
-
-	target_include_directories(CppProtoNetworkTest
-		PUBLIC
-			${CMAKE_CURRENT_SOURCE_DIR}/srcTest
-	)
-
-	target_link_libraries(CppProtoNetworkTest
-		PRIVATE
-			CppProtocolTest
-			CppProtoNetwork
-	)
-	
-endif (CppProtoNetworkTest)
+message(STATUS "CppProtoNetwork_Example is available to add: -DCppProtoNetwork_Example=1")
+option(CppProtoNetwork_Example "Add CppProtoNetwork_Example project." OFF)
+if (CppProtoNetwork_Example)
+	add_subdirectory(CppProtoNetwork_Example)
+endif (CppProtoNetwork_Example)
