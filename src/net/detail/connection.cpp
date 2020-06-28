@@ -90,4 +90,4 @@ namespace net::detail {
 		}
 	}
 
-} // Namespace net::detail.
+}

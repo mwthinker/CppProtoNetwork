@@ -32,11 +32,11 @@ namespace net {
 		std::shared_ptr<Server> server_;
 	};
 
-} // Namespace net.
+}
 
 template <class Message>
 void net::RemoteClient::setReceiveHandler(ReceiveHandler<Message>&& receiveHandler) {
 	connection_.setReceiveHandler<Message>(std::forward<ReceiveHandler<Message>>(receiveHandler));
 }
 
-#endif // CPPPROTONETWORK_NET_REMOTECLIENT_H
+#endif

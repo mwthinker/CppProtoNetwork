@@ -65,6 +65,6 @@ namespace net {
 		int port_{};
 	};
 
-} // Namespace net.
+}
 
-#endif // CPPPROTONETWORK_NET_SERVER_H
+#endif

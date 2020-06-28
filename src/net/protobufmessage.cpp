@@ -67,4 +67,4 @@ namespace net {
 		buffer_[1] = (bodySize & 0xFF);
 	}
 
-} // Namespace net.
+}

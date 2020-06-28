@@ -16,7 +16,8 @@ namespace net {
 
 		~LanUdpSender();
 		
-		void setDisconnectHandler(DisconnectHandler&& disconnectHandler) {
+		template <class Handler>
+		void setDisconnectHandler(Handler&& disconnectHandler) {
 			disconnectHandler_ = disconnectHandler;
 		}
 
@@ -44,6 +45,6 @@ namespace net {
 		bool active_{};
 	};
 
-} // Namespace net.
+}
 
-#endif // CPPPROTONETWORK_NET_LANUDPSENDER_H
+#endif

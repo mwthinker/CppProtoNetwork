@@ -37,6 +37,6 @@ namespace net {
 			"template type must have google::protobuf::MessageLite as base class");
 	}
 
-} // Namespace net.
+}
 
-#endif // CPPPROTONETWORK_NET_AUXILIARY_H
+#endif

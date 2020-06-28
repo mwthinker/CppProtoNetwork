@@ -49,7 +49,7 @@ namespace net {
 		bool active_{};
 	};
 
-} // Namespace net.
+}
 
 template <class Message>
 void net::LanUdpReceiver::setReceiveHandler(LanReceiveHandler<Message>&& receiveHandler) {
@@ -72,4 +72,4 @@ void net::LanUdpReceiver::setReceiveHandler(LanReceiveHandler<Message>&& receive
 	};
 }
 
-#endif // CPPPROTONETWORK_NET_LANUDPRECEIVER_H
+#endif

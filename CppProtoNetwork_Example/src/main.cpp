@@ -35,6 +35,21 @@ void runServer() {
 	asio::io_context ioContext;
 
 	auto server = Server::create(ioContext);
+
+	auto connectHandler = [&](const RemoteClientPtr& remoteClientPtr) {
+		std::cout << "New Connection\n";
+
+		remoteClientPtr->setReceiveHandler<message::Wrapper>([](const message::Wrapper& wrapper, std::error_code ec) {
+			std::cout << "Received: " << wrapper.text() << std::endl;
+		});
+
+		remoteClientPtr->setDisconnectHandler([](std::error_code ec) {
+			std::cout << "Disconnected" << std::endl;
+		});
+	};
+
+	server->setConnectHandler(connectHandler);
+
 	server->setConnectHandler([&](const RemoteClientPtr& remoteClientPtr) {
 		std::cout << "New Connection\n";
 
@@ -79,6 +94,14 @@ void runClient() {
 	client->setReceiveHandler<message::Wrapper>([](const message::Wrapper& message, std::error_code ec) {
 		std::cout << "Received: " << message.text() << std::endl;
 	});
+
+
+	auto disconnectHandler = [&](std::error_code ec) {
+		connected = false;
+		std::cout << "Disconnected: " << ec.message() << std::endl;
+	};
+	client->setDisconnectHandler(disconnectHandler);
+
 	client->setDisconnectHandler([&](std::error_code ec) {
 		connected = false;
 		std::cout << "Disconnected: " << ec.message() << std::endl;
@@ -114,6 +137,13 @@ void runServerLan() {
 	LanUdpSender lanUdpSender{ioContext};
 
 	bool disconnected = false;
+
+	std::function<void(std::error_code ec)> a = [&](std::error_code ec) {
+		disconnected = true;
+		std::cout << ec.message() << std::endl;
+	};
+	lanUdpSender.setDisconnectHandler(a);
+
 	lanUdpSender.setDisconnectHandler([&](std::error_code ec) {
 		disconnected = true;
 		std::cout << ec.message() << std::endl;

@@ -82,4 +82,4 @@ namespace net {
 		return std::shared_ptr<Client>(new Client{ioContext});
 	}
 
-} // Namespace net.
+}

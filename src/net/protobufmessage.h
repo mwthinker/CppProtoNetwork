@@ -62,6 +62,6 @@ namespace net {
 		std::vector<char> buffer_;
 	};
 
-} // Namespace net.
+}
 
-#endif // CPPPROTONETWORK_NET_PROTOBUFMESSAGE_H
+#endif

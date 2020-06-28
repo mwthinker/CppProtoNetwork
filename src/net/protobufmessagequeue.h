@@ -38,6 +38,6 @@ namespace net {
 		size_t messageSize_{DEFAULT_MESSAGE_SIZE};
 	};
 
-} // Namespace net.
+}
 
-#endif // CPPPROTONETWORK_NET_PROTOBUFMESSAGEQUEUE_H
+#endif

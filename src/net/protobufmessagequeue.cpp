@@ -44,4 +44,4 @@ namespace net {
 		messageSize_ = messageSize;
 	}
 
-} // Namespace net.
+}

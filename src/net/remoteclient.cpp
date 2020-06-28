@@ -32,4 +32,4 @@ namespace net {
 		});
 	}
 
-} // Namespace net.
+}

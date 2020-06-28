@@ -32,4 +32,4 @@ namespace net {
 		return {static_cast<int>(e), connectionErrorCategory};
 	}
 
-} // Namespace net.
+}

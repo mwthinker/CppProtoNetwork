@@ -115,4 +115,4 @@ namespace net {
 		removeFirstMatch<RemoteClientPtr>(clients_, client);
 	}
 
-} // Namespace net.
+}

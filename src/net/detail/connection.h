@@ -60,6 +60,6 @@ namespace net::detail {
 		net::ProtobufMessage receiveMessage_;
 	};
 
-} // Namespace net.
+}
 
-#endif // CPPPROTONETWORK_NET_DETAIL_CONNECTION_H
+#endif

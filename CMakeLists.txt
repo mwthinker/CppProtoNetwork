@@ -13,8 +13,6 @@ project(CppProtoNetwork
 	LANGUAGES
 		CXX
 )
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(CppProtoNetwork
 	src/net/detail/connection.cpp
@@ -67,6 +65,20 @@ target_link_libraries(CppProtoNetwork
 	PUBLIC
 		Threads::Threads
 		protobuf::libprotobuf
+)
+
+if (MSVC)
+	target_compile_options(CppProtoNetwork
+		PRIVATE
+			"/permissive-"
+	)
+endif (MSVC)
+
+set_target_properties(CppProtoNetwork
+	PROPERTIES
+		CXX_STANDARD 17
+		CXX_STANDARD_REQUIRED YES
+		CXX_EXTENSIONS NO
 )
 
 message(STATUS "CppProtoNetwork_Example is available to add: -DCppProtoNetwork_Example=1")

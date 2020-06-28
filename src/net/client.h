@@ -49,7 +49,7 @@ namespace net {
 		std::mutex mutex_;
 	};
 
-} // Namespace net.
+}
 
 template <class Message>
 void net::Client::setReceiveHandler(ReceiveHandler<Message>&& receiveHandler) {
@@ -58,4 +58,4 @@ void net::Client::setReceiveHandler(ReceiveHandler<Message>&& receiveHandler) {
 	}
 }
 
-#endif // CPPPROTONETWORK_NET_CLIENT_H
+#endif

@@ -86,4 +86,4 @@ namespace net {
 		}
 	}
 
-} // Namespace net.
+}
