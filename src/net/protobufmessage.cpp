@@ -34,7 +34,7 @@ namespace net {
 	}
 
 	void ProtobufMessage::setBuffer(const google::protobuf::MessageLite& message) {
-		int size = message.ByteSize();
+		int size = static_cast<int>(message.ByteSizeLong());
 		buffer_.resize(getHeaderSize() + size);
 		message.SerializeToArray(buffer_.data() + getHeaderSize(), size);
 		defineBodySize();
@@ -62,7 +62,7 @@ namespace net {
 	}
 
 	void ProtobufMessage::defineBodySize() {
-		int bodySize = buffer_.size() - getHeaderSize();
+		int bodySize = static_cast<int>(buffer_.size()) - getHeaderSize();
 		buffer_[0] = ((bodySize >> 8) & 0xFF);
 		buffer_[1] = (bodySize & 0xFF);
 	}
