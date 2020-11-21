@@ -7,7 +7,7 @@ namespace net {
 
 	namespace {
 
-		template<class T>
+		template<typename T>
 		void removeFirstMatch(std::vector<T>& v, const T& value) {
 			auto it = std::find(v.begin(), v.end(), value);
 			if (it != v.end()) {

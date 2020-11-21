@@ -12,11 +12,11 @@ namespace net {
 
 	class LanUdpSender {
 	public:
-		LanUdpSender(asio::io_context& ioContext, size_t maxSize = 1024);
+		LanUdpSender(asio::io_context& ioContext, int maxSize = 1024);
 
 		~LanUdpSender();
 		
-		template <class Handler>
+		template <typename Handler>
 		void setDisconnectHandler(Handler&& disconnectHandler) {
 			disconnectHandler_ = disconnectHandler;
 		}
@@ -41,7 +41,7 @@ namespace net {
 		DisconnectHandler disconnectHandler_;
 		asio::steady_timer timer_;
 		std::chrono::seconds duration_{1};
-		size_t maxSize_{};
+		int maxSize_{};
 		bool active_{};
 	};
 

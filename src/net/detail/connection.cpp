@@ -19,7 +19,7 @@ namespace net::detail {
 	}
 
 	Connection::~Connection() {
-		disconnect(make_error_code(Error::NONE));
+		disconnect(make_error_code(Error::None));
 	}
 
 	void Connection::setDisconnectHandler(DisconnectHandler&& disconnectHandler) {
@@ -32,12 +32,12 @@ namespace net::detail {
 		protobufMessage.setBuffer(message);
 
 		const char* data = protobufMessage.getData();
-		size_t size = protobufMessage.getSize();
+		int size = protobufMessage.getSize();
 		asio::async_write(socket_, asio::buffer(data, size), asio::transfer_exactly(size),
 			[this, pb = std::move(protobufMessage)](std::error_code ec, std::size_t length) mutable {
 
 			if (pb.getBodySize() > MAX_SIZE) {
-				disconnect(make_error_code(Error::MESSAGE_MAX_SIZE));
+				disconnect(make_error_code(Error::MessageMaxSize));
 			} else if (ec) {
 				disconnect(ec);
 			}
@@ -54,7 +54,7 @@ namespace net::detail {
 			[this] (std::error_code ec, std::size_t size) {
 
 			if (receiveMessage_.getBodySize() > MAX_SIZE) {
-				disconnect(make_error_code(Error::MESSAGE_MAX_SIZE));
+				disconnect(make_error_code(Error::MessageMaxSize));
 			} else if (ec) {
 				disconnect(ec);
 			} else {
@@ -73,7 +73,7 @@ namespace net::detail {
 					disconnect(ec);
 				} else {
 					if (receiveHandler_) {
-						receiveHandler_(receiveMessage_, make_error_code(Error::NONE));
+						receiveHandler_(receiveMessage_, make_error_code(Error::None));
 						readHeader();
 					} else {
 						disconnect(ec);

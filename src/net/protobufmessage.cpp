@@ -13,7 +13,7 @@ namespace net {
 	ProtobufMessage::ProtobufMessage() {
 	}
 
-	ProtobufMessage::ProtobufMessage(size_t size)
+	ProtobufMessage::ProtobufMessage(int size)
 		: buffer_(size + getHeaderSize()) {
 
 		defineBodySize();
@@ -44,7 +44,7 @@ namespace net {
 		buffer_.resize(getHeaderSize() + getBodySize());
 	}
 
-	void ProtobufMessage::reserveBodySize(size_t size) {
+	void ProtobufMessage::reserveBodySize(int size) {
 		buffer_.resize(getHeaderSize() + size);
 		defineBodySize();
 	}

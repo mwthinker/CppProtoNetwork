@@ -22,7 +22,7 @@ namespace net {
 	}
 
 	void RemoteClient::disconnect() {
-		connection_.disconnect(make_error_code(Error::NONE));
+		connection_.disconnect(make_error_code(Error::None));
 	}
 
 	void RemoteClient::setDisconnectHandler(DisconnectHandler&& disconnectHandler) {

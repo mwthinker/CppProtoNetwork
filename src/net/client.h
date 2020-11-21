@@ -34,7 +34,7 @@ namespace net {
 			return active_;
 		}
 		
-		template <class Message>
+		template <typename Message>
 		void setReceiveHandler(ReceiveHandler<Message>&& receiveHandler);
 
 	private:
@@ -51,10 +51,10 @@ namespace net {
 
 }
 
-template <class Message>
+template <typename Message>
 void net::Client::setReceiveHandler(ReceiveHandler<Message>&& receiveHandler) {
 	if (!active_) {
-		connection_.setReceiveHandler<Message>(std::forward<ReceiveHandler<Message>>(receiveHandler));
+		connection_.setReceiveHandler<Message>(std::move(receiveHandler));
 	}
 }
 

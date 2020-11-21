@@ -10,7 +10,7 @@ namespace net {
 	public:
 		ProtobufMessage();
 
-		explicit ProtobufMessage(size_t size);
+		explicit ProtobufMessage(int size);
 
 		ProtobufMessage(const ProtobufMessage&) = default;
 
@@ -24,8 +24,8 @@ namespace net {
 
 		void setBuffer(const google::protobuf::MessageLite& message);
 
-		size_t getSize() const noexcept {
-			return buffer_.size();
+		int getSize() const noexcept {
+			return static_cast<int>(buffer_.size());
 		}
 
 		constexpr int getHeaderSize() const noexcept {
@@ -34,7 +34,7 @@ namespace net {
 
 		void reserveBodySize();
 
-		void reserveBodySize(size_t size);
+		void reserveBodySize(int size);
 
 		int getBodySize() const;
 

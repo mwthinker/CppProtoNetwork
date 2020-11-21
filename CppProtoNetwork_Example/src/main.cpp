@@ -17,7 +17,7 @@ const std::string LOCALHOST = "127.0.0.1";
 
 constexpr unsigned short LAN_PORT = 32012;
 
-template <class T>
+template <typename T>
 void repeatTimer(asio::steady_timer& timer, const std::chrono::seconds interval, T callback) {
 	timer.expires_after(interval);
 	timer.async_wait([&timer, interval, callback](const std::error_code& error) {

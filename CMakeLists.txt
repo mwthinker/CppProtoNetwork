@@ -25,7 +25,7 @@ add_library(CppProtoNetwork
 	src/net/lanudpreceiver.cpp
 	src/net/lanudpreceiver.h
 	src/net/lanudpsender.cpp
-	src/net/lanudpsender.h	
+	src/net/lanudpsender.h
 	src/net/protobufmessage.cpp
 	src/net/protobufmessage.h
 	src/net/protobufmessagequeue.cpp

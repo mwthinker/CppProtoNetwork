@@ -16,11 +16,11 @@ namespace net {
 	std::string ConnectionErrorCategory::message(int ev) const
 	{
 		switch (static_cast<Error>(ev)) {
-			case Error::MESSAGE_MAX_SIZE:
+			case Error::MessageMaxSize:
 				return "received message to big";
-			case Error::MESSAGE_INCORRECT_SIZE:
+			case Error::MessageIncorrectSize:
 				return "received message differs from received size";
-			case Error::PROTOBUF_PROTOCOL_ERROR:
+			case Error::ProtobufProtocolError:
 				return "protobuf protocol error";
 			default:
 				return "(unrecognized error)";

@@ -8,22 +8,20 @@
 
 namespace net {
 
-	template <class Message>
+	template <typename Message>
 	using LanReceiveHandler = std::function<void(const Meta& meta, const Message& message, std::error_code ec)>;
 
 	class LanUdpReceiver {
 	public:
-		LanUdpReceiver(asio::io_context& ioContext, size_t maxSize = 1024);
+		LanUdpReceiver(asio::io_context& ioContext, int maxSize = 1024);
 
 		~LanUdpReceiver();
 
-		void setDisconnectHandler(DisconnectHandler&& disconnectHandler) {
-			disconnectHandler_ = disconnectHandler;
-		}
+		void setDisconnectHandler(DisconnectHandler&& disconnectHandler);
 
 		void connect(unsigned short port);
 		
-		template <class Message>
+		template <typename Message>
 		void setReceiveHandler(LanReceiveHandler<Message>&& receiveHandler);
 
 		void disconnect();
@@ -45,18 +43,18 @@ namespace net {
 		InternalReceiveHandler receiveHandler_;
 		ProtobufMessage recvBuffer_;
 		DisconnectHandler disconnectHandler_;
-		size_t maxSize_{};
+		int maxSize_{};
 		bool active_{};
 	};
 
 }
 
-template <class Message>
+template <typename Message>
 void net::LanUdpReceiver::setReceiveHandler(LanReceiveHandler<Message>&& receiveHandler) {
-	IS_BASE_OF_MESSAGELITE<Message>();
+	staticAssertBaseOfMessageLite<Message>();
 
 	Message protocolMessage;
-	receiveHandler_ = [protocolMessage, messageHandler = std::forward<LanReceiveHandler<Message>>(receiveHandler)]
+	receiveHandler_ = [protocolMessage, messageHandler = std::move(receiveHandler)]
 	(const Meta& meta, const ProtobufMessage& protobufMessage, std::error_code ec) mutable {
 		protocolMessage.Clear();
 		if (ec) {
@@ -66,7 +64,7 @@ void net::LanUdpReceiver::setReceiveHandler(LanReceiveHandler<Message>&& receive
 			if (valid) {
 				messageHandler(meta, protocolMessage, ec);
 			} else {
-				messageHandler(meta, protocolMessage, make_error_code(Error::PROTOBUF_PROTOCOL_ERROR));
+				messageHandler(meta, protocolMessage, make_error_code(Error::ProtobufProtocolError));
 			}
 		}
 	};

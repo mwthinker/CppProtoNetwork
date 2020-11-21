@@ -18,10 +18,10 @@ namespace net::detail {
 
 		template <typename Message>
 		void setReceiveHandler(ReceiveHandler<Message>&& messageHandler) {
-			IS_BASE_OF_MESSAGELITE<Message>();
+			staticAssertBaseOfMessageLite<Message>();
 
 			Message protocolMessage;
-			receiveHandler_ = [protocolMessage, messageHandler = std::forward<ReceiveHandler<Message>>(messageHandler)]
+			receiveHandler_ = [protocolMessage, messageHandler = std::move(messageHandler)]
 			(const net::ProtobufMessage& message, std::error_code ec) mutable {
 				protocolMessage.Clear();
 				if (ec) {
@@ -31,7 +31,7 @@ namespace net::detail {
 					if (valid) {
 						messageHandler(protocolMessage, ec);
 					} else {
-						messageHandler(protocolMessage, make_error_code(Error::PROTOBUF_PROTOCOL_ERROR));
+						messageHandler(protocolMessage, make_error_code(Error::ProtobufProtocolError));
 					}
 				}
 			};

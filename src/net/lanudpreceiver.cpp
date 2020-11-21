@@ -2,7 +2,7 @@
 
 namespace net {
 
-	LanUdpReceiver::LanUdpReceiver(asio::io_context& ioContext, size_t maxSize)
+	LanUdpReceiver::LanUdpReceiver(asio::io_context& ioContext, int maxSize)
 		: ioContext_{ioContext}
 		, socket_{ioContext}
 		, maxSize_{maxSize}
@@ -11,6 +11,10 @@ namespace net {
 	}
 
 	LanUdpReceiver::~LanUdpReceiver() {
+	}
+
+	void LanUdpReceiver::setDisconnectHandler(DisconnectHandler&& disconnectHandler) {
+		disconnectHandler_ = std::move(disconnectHandler);
 	}
 
 	void LanUdpReceiver::connect(unsigned short port) {
@@ -69,7 +73,7 @@ namespace net {
 					if (bytesTransferred != recvBuffer_.getSize()) {
 						recvBuffer_.clear();
 
-						callReceivHandler(meta, recvBuffer_, make_error_code(Error::MESSAGE_INCORRECT_SIZE));
+						callReceivHandler(meta, recvBuffer_, make_error_code(Error::MessageIncorrectSize));
 						asyncReceive();
 						return;
 					}

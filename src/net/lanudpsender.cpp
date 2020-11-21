@@ -4,7 +4,7 @@ using namespace std::chrono_literals;
 
 namespace net {
 
-	LanUdpSender::LanUdpSender(asio::io_context& ioContext, size_t maxSize)
+	LanUdpSender::LanUdpSender(asio::io_context& ioContext, int maxSize)
 		: ioContext_{ioContext}
 		, socket_{ioContext}
 		, protobufMessage_{maxSize}

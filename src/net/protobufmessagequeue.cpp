@@ -2,7 +2,7 @@
 
 namespace net {
 
-	ProtobufMessageQueue::ProtobufMessageQueue(size_t messageSize)
+	ProtobufMessageQueue::ProtobufMessageQueue(int messageSize)
 		: messageSize_{messageSize} {
 	}
 
@@ -29,17 +29,17 @@ namespace net {
 		}
 	}
 
-	size_t ProtobufMessageQueue::getSize() const {
+	int ProtobufMessageQueue::getSize() const {
 		std::lock_guard<std::mutex> lock{mutex_};
-		return buffer_.size();
+		return static_cast<int>(buffer_.size());
 	}
 
-	size_t ProtobufMessageQueue::getMessageSize() const {
+	int ProtobufMessageQueue::getMessageSize() const {
 		std::lock_guard<std::mutex> lock{mutex_};
 		return messageSize_;
 	}
 
-	void ProtobufMessageQueue::setMessageSize(size_t messageSize) {
+	void ProtobufMessageQueue::setMessageSize(int messageSize) {
 		std::lock_guard<std::mutex> lock{mutex_};
 		messageSize_ = messageSize;
 	}

@@ -12,7 +12,7 @@ namespace net {
 	public:
 		ProtobufMessageQueue() = default;
 
-		explicit ProtobufMessageQueue(size_t messageSize);
+		explicit ProtobufMessageQueue(int messageSize);
 
 		ProtobufMessageQueue(const ProtobufMessageQueue&) = delete;
 		ProtobufMessageQueue(ProtobufMessageQueue&&) = delete;
@@ -24,18 +24,18 @@ namespace net {
 
 		void clear();
 		
-		size_t getSize() const;
+		int getSize() const;
 
-		size_t getMessageSize() const;
+		int getMessageSize() const;
 
-		void setMessageSize(size_t messageSize);
+		void setMessageSize(int messageSize);
 
 	private:
-		static constexpr size_t DEFAULT_MESSAGE_SIZE{512};
+		static constexpr int DEFAULT_MESSAGE_SIZE{512};
 
 		mutable std::mutex mutex_;
 		std::queue<ProtobufMessage> buffer_;
-		size_t messageSize_{DEFAULT_MESSAGE_SIZE};
+		int messageSize_{DEFAULT_MESSAGE_SIZE};
 	};
 
 }

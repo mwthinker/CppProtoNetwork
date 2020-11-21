@@ -22,7 +22,7 @@ namespace net {
 
 		void setDisconnectHandler(DisconnectHandler&& disconnectHandler);
 
-		template <class Message>
+		template <typename Message>
 		void setReceiveHandler(ReceiveHandler<Message>&& receiveHandler);
 
 	private:
@@ -34,9 +34,9 @@ namespace net {
 
 }
 
-template <class Message>
+template <typename Message>
 void net::RemoteClient::setReceiveHandler(ReceiveHandler<Message>&& receiveHandler) {
-	connection_.setReceiveHandler<Message>(std::forward<ReceiveHandler<Message>>(receiveHandler));
+	connection_.setReceiveHandler<Message>(std::move(receiveHandler));
 }
 
 #endif

@@ -54,7 +54,7 @@ namespace net {
 
 	void Client::disconnect() {
 		if (active_) {
-			connection_.disconnect(make_error_code(Error::NONE));
+			connection_.disconnect(make_error_code(Error::None));
 			disconnect();
 		}
 	}
