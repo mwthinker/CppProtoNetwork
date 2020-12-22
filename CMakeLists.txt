@@ -36,6 +36,7 @@ add_library(CppProtoNetwork
 	src/net/server.h
 )
 
+find_package(asio CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Protobuf CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
@@ -65,6 +66,7 @@ target_link_libraries(CppProtoNetwork
 	PUBLIC
 		Threads::Threads
 		protobuf::libprotobuf
+		asio asio::asio
 )
 
 if (MSVC)
