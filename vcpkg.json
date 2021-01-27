@@ -1,0 +1,14 @@
+{
+	"name": "cppprotonetwork",
+	"version-string": "0.1.0",
+	"port-version": 1,
+	"homepage": "https://github.com/mwthinker/CppProtoNetwork",
+	"description": "A C++ network library using TCP sockets, using ASIO and Protobuf.",
+	"license": "MIT",
+	"dependencies": [
+		"spdlog",
+		"asio",
+		"protobuf",
+		"catch2"
+	]
+}
