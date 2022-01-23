@@ -21,6 +21,7 @@
 *ReleaseSdl2
 *ReleaseBuildSdl2
 /build*
+/linuxBuild
 external/
 
 #################

@@ -1,8 +1,5 @@
-cmake_minimum_required(VERSION 3.1...3.14)
+cmake_minimum_required(VERSION 3.21)
 project(CppProtoNetwork_ExampleProtocol)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Protobuf REQUIRED)
 
@@ -32,4 +29,11 @@ target_link_libraries(CppProtoNetwork_ExampleProtocol
 		protobuf::libprotobuf
 	PRIVATE
 		protobuf::libprotoc
+)
+
+set_target_properties(CppProtoNetwork_ExampleProtocol
+	PROPERTIES
+		CXX_STANDARD 20
+		CXX_STANDARD_REQUIRED YES
+		CXX_EXTENSIONS NO
 )

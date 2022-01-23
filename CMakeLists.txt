@@ -1,12 +1,4 @@
-cmake_minimum_required(VERSION 3.1...3.14)
-
-set(VCPKG_ROOT $ENV{VCPKG_ROOT})
-if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-	set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
-		CACHE STRING ""
-	)
-endif()
-
+cmake_minimum_required(VERSION 3.21)
 project(CppProtoNetwork
 	DESCRIPTION
 		"C++ Server/Client library using ASIO and protobuf"
@@ -55,7 +47,7 @@ if (MSVC)
 			_WIN32_WINNT=_WIN32_WINNT_WS03
 			_WINSOCK_DEPRECATED_NO_WARNINGS
 	)
-endif (MSVC)
+endif ()
 
 target_include_directories(CppProtoNetwork
 	PUBLIC
@@ -74,11 +66,11 @@ if (MSVC)
 		PRIVATE
 			"/permissive-"
 	)
-endif (MSVC)
+endif ()
 
 set_target_properties(CppProtoNetwork
 	PROPERTIES
-		CXX_STANDARD 17
+		CXX_STANDARD 20
 		CXX_STANDARD_REQUIRED YES
 		CXX_EXTENSIONS NO
 )
@@ -87,4 +79,4 @@ message(STATUS "CppProtoNetwork_Example is available to add: -DCppProtoNetwork_E
 option(CppProtoNetwork_Example "Add CppProtoNetwork_Example project." OFF)
 if (CppProtoNetwork_Example)
 	add_subdirectory(CppProtoNetwork_Example)
-endif (CppProtoNetwork_Example)
+endif ()

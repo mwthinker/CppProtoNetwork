@@ -3,16 +3,12 @@ CppProtoNetwork
 # About
 A network library using TCP sockets. Handles server and clients. Uses standalone [Asio](https://think-async.com/Asio/) (no boost) library. Data is serialized using [Protobuf](https://developers.google.com/protocol-buffers/).
 
-All functions are asynchronous.
-
-It uses C++17 and the C++ standard library.
-
-Uses one internal thread. Is safe to use from one thread (probably).
+It uses C++20 and the C++ standard library.
 
 # Requirements
 
 * [CMake](https://cmake.org/)
-* C++17 compliant compiler
+* C++20 compliant compiler
 * [vcpkg](https://github.com/microsoft/vcpkg)
 
 ## vcpkg
@@ -20,8 +16,9 @@ Either define CMAKE_TOOLCHAIN_FILE in cmake to use the one provided by vcpkg or 
 
 Install following packages:
 ```
-vcpkg install protobuf
-vcpkg install asio
+# Inside project dir (assuming in a unix host)
+mkdir build
+cmake --preset=unix ..
 ```
 
 # Example code
@@ -43,7 +40,7 @@ message Wrapper {
 #include <net/server.h>
 #include <message.pb.h> // Generated code by protobuf.
 
-... // Some code.
+// Some code ...
 
 auto server = Server::create();
 // Must setup connections handlers before server is connected.
@@ -61,7 +58,7 @@ server->setConnectHandler([](const RemoteClientPtr& remoteClientPtr) {
     });
 });
 
-... // Some code.
+// Some code ...
 
 // Start listening to incomming connections on port 5012
 try {
@@ -71,7 +68,7 @@ try {
     return;
 }
 
-... // Some code.
+// Some code ...
 
 // Set some data
 message::Wrapper wrapper;
@@ -80,7 +77,7 @@ wrapper.set_text("Hellor world");
 // Send to all conencted clients.
 server->sendToAll(wrapper);
 
-... // Some code.
+// Some code ...
 
 void sendToSpecificClient(RemoteClientPtr remoteClientPtr) {
     message::Wrapper wrapper;
@@ -97,7 +94,7 @@ void sendToSpecificClient(RemoteClientPtr remoteClientPtr) {
 #include <net/client.h>
 #include <message.pb.h> // Generated code by protobuf.
 
-... // Some code.
+// Some code ...
 
 auto client = Client::create();
 // Must setup connections handlers before client is connected.
@@ -119,12 +116,12 @@ client->setDisconnectHandler([](std::error_code ec) {
     std::cout << "Disconnected: " << ec.message() << "\n";
 });
 
-... // Some code.
+// Some code ...
 
 // Connect to server.
 client->connect("127.0.0.1", 5012);
 
-... // Some code.
+// Some code ...
 
 // Set some data
 message::Wrapper wrapper;

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1...3.14)
+cmake_minimum_required(VERSION 3.21)
 project(CppProtoNetwork_Example
 	DESCRIPTION
 		"A example of using the CppProtoNetwork_Example library"
@@ -24,11 +24,11 @@ if (MSVC)
 		PRIVATE
 			"/permissive-"
 	)
-endif (MSVC)
+endif ()
 
 set_target_properties(CppProtoNetwork_Example
 	PROPERTIES
-		CXX_STANDARD 17
+		CXX_STANDARD 20
 		CXX_STANDARD_REQUIRED YES
 		CXX_EXTENSIONS NO
 )
