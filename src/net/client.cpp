@@ -6,7 +6,6 @@
 #include <deque>
 #include <iostream>
 
-using namespace asio;
 using asio::ip::tcp;
 
 namespace net {
@@ -27,7 +26,7 @@ namespace net {
 			if (!active_) {
 				active_ = true;
 				std::vector<tcp::endpoint> endpointSequence{
-					tcp::endpoint{ip::make_address_v4(ip), port}
+					tcp::endpoint{asio::ip::make_address_v4(ip), port}
 				};
 
 				asio::async_connect(connection_.getSocket(), endpointSequence,

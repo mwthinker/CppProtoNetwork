@@ -8,7 +8,7 @@
 
 namespace net {
 
-	template <typename Message>
+	template <MessageLite Message>
 	using LanReceiveHandler = std::function<void(const Meta& meta, const Message& message, std::error_code ec)>;
 
 	class LanUdpReceiver {
@@ -20,8 +20,8 @@ namespace net {
 		void setDisconnectHandler(DisconnectHandler&& disconnectHandler);
 
 		void connect(unsigned short port);
-		
-		template <typename Message>
+
+		template <MessageLite Message>
 		void setReceiveHandler(LanReceiveHandler<Message>&& receiveHandler);
 
 		void disconnect();
@@ -36,38 +36,35 @@ namespace net {
 		void callReceivHandler(const Meta& meta, const ProtobufMessage& protobufMessage, const std::error_code& ec) const;
 
 		void callHandle(const std::error_code& ec = {});
-		
+
 		asio::io_context& ioContext_;
 		asio::ip::udp::endpoint remoteEndpoint_;
 		asio::ip::udp::socket socket_;
 		InternalReceiveHandler receiveHandler_;
 		ProtobufMessage recvBuffer_;
 		DisconnectHandler disconnectHandler_;
-		int maxSize_{};
-		bool active_{};
+		int maxSize_ = 0;
+		bool active_ = 0;
 	};
 
-}
-
-template <typename Message>
-void net::LanUdpReceiver::setReceiveHandler(LanReceiveHandler<Message>&& receiveHandler) {
-	staticAssertBaseOfMessageLite<Message>();
-
-	Message protocolMessage;
-	receiveHandler_ = [protocolMessage, messageHandler = std::move(receiveHandler)]
-	(const Meta& meta, const ProtobufMessage& protobufMessage, std::error_code ec) mutable {
-		protocolMessage.Clear();
-		if (ec) {
-			messageHandler(meta, protocolMessage, ec);
-		} else {
-			bool valid = protocolMessage.ParseFromArray(protobufMessage.getBodyData(), protobufMessage.getBodySize());
-			if (valid) {
+	template <MessageLite Message>
+	void LanUdpReceiver::setReceiveHandler(LanReceiveHandler<Message>&& receiveHandler) {
+		receiveHandler_ = [protocolMessage = Message{}, messageHandler = std::move(receiveHandler)]
+		(const Meta& meta, const ProtobufMessage& protobufMessage, std::error_code ec) mutable {
+			protocolMessage.Clear();
+			if (ec) {
 				messageHandler(meta, protocolMessage, ec);
 			} else {
-				messageHandler(meta, protocolMessage, make_error_code(Error::ProtobufProtocolError));
+				bool valid = protocolMessage.ParseFromArray(protobufMessage.getBodyData(), protobufMessage.getBodySize());
+				if (valid) {
+					messageHandler(meta, protocolMessage, ec);
+				} else {
+					messageHandler(meta, protocolMessage, make_error_code(Error::ProtobufProtocolError));
+				}
 			}
-		}
-	};
+		};
+	}
+
 }
 
 #endif

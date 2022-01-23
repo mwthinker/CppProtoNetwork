@@ -34,7 +34,7 @@ namespace net {
 			return active_;
 		}
 		
-		template <typename Message>
+		template <MessageLite Message>
 		void setReceiveHandler(ReceiveHandler<Message>&& receiveHandler);
 
 	private:
@@ -49,13 +49,13 @@ namespace net {
 		std::mutex mutex_;
 	};
 
-}
-
-template <typename Message>
-void net::Client::setReceiveHandler(ReceiveHandler<Message>&& receiveHandler) {
-	if (!active_) {
-		connection_.setReceiveHandler<Message>(std::move(receiveHandler));
+	template <MessageLite Message>
+	void net::Client::setReceiveHandler(ReceiveHandler<Message>&& receiveHandler) {
+		if (!active_) {
+			connection_.setReceiveHandler<Message>(std::move(receiveHandler));
+		}
 	}
+
 }
 
 #endif

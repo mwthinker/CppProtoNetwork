@@ -4,6 +4,8 @@
 #include <asio.hpp>
 #include <google/protobuf/message_lite.h>
 
+#include <concepts>
+
 namespace net {
 
 	enum class Error {
@@ -29,13 +31,10 @@ namespace net {
 	using ServerDisconnectHandler = std::function<void(std::system_error ec)>;
 
 	template <typename Message>
-	using ReceiveHandler = std::function<void(const Message& message, std::error_code ec)>;
+	concept MessageLite = std::derived_from<Message, google::protobuf::MessageLite>;
 
-	template <typename Message>
-	constexpr void staticAssertBaseOfMessageLite() {
-		static_assert(std::is_base_of<google::protobuf::MessageLite, Message>::value,
-			"template type must have google::protobuf::MessageLite as base class");
-	}
+	template <MessageLite Message>
+	using ReceiveHandler = std::function<void(const Message& message, std::error_code ec)>;
 
 }
 

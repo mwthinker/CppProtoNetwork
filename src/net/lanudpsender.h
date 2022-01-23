@@ -41,8 +41,8 @@ namespace net {
 		DisconnectHandler disconnectHandler_;
 		asio::steady_timer timer_;
 		std::chrono::seconds duration_{1};
-		int maxSize_{};
-		bool active_{};
+		int maxSize_ = 0;
+		bool active_ = 0;
 	};
 
 }

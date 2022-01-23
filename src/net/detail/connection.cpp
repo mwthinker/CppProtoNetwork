@@ -10,7 +10,7 @@ namespace net::detail {
 
 	namespace {
 		
-		constexpr int MAX_SIZE = 1024;
+		constexpr int MaxSize = 1024;
 
 	}
 
@@ -36,7 +36,7 @@ namespace net::detail {
 		asio::async_write(socket_, asio::buffer(data, size), asio::transfer_exactly(size),
 			[this, pb = std::move(protobufMessage)](std::error_code ec, std::size_t length) mutable {
 
-			if (pb.getBodySize() > MAX_SIZE) {
+			if (pb.getBodySize() > MaxSize) {
 				disconnect(make_error_code(Error::MessageMaxSize));
 			} else if (ec) {
 				disconnect(ec);
@@ -53,7 +53,7 @@ namespace net::detail {
 			asio::transfer_exactly(receiveMessage_.getHeaderSize()),
 			[this] (std::error_code ec, std::size_t size) {
 
-			if (receiveMessage_.getBodySize() > MAX_SIZE) {
+			if (receiveMessage_.getBodySize() > MaxSize) {
 				disconnect(make_error_code(Error::MessageMaxSize));
 			} else if (ec) {
 				disconnect(ec);

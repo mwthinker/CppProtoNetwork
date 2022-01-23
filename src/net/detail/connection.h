@@ -16,10 +16,8 @@ namespace net::detail {
 
 		void send(const google::protobuf::MessageLite& message);
 
-		template <typename Message>
+		template <MessageLite Message>
 		void setReceiveHandler(ReceiveHandler<Message>&& messageHandler) {
-			staticAssertBaseOfMessageLite<Message>();
-
 			Message protocolMessage;
 			receiveHandler_ = [protocolMessage, messageHandler = std::move(messageHandler)]
 			(const net::ProtobufMessage& message, std::error_code ec) mutable {

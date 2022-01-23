@@ -1,6 +1,5 @@
 #include "server.h"
 
-using namespace asio;
 using asio::ip::tcp;
 
 namespace net {
