@@ -26,6 +26,8 @@ add_library(CppProtoNetwork
 	src/net/remoteclient.h
 	src/net/server.cpp
 	src/net/server.h
+
+	vcpkg.json
 )
 
 find_package(asio CONFIG REQUIRED)
@@ -65,6 +67,7 @@ if (MSVC)
 	target_compile_options(CppProtoNetwork
 		PRIVATE
 			"/permissive-"
+			"/wd4251" # 'identifier' : class 'type' needs to have dll-interface to be used by clients of class 'type2'
 	)
 endif ()
 
@@ -79,4 +82,10 @@ message(STATUS "CppProtoNetwork_Example is available to add: -DCppProtoNetwork_E
 option(CppProtoNetwork_Example "Add CppProtoNetwork_Example project." OFF)
 if (CppProtoNetwork_Example)
 	add_subdirectory(CppProtoNetwork_Example)
+endif ()
+
+message(STATUS "CppProtoNetwork_Example is available to add: -DCppProtoNetwork_Test=1")
+option(CppProtoNetwork_Test "Add CppProtoNetwork_Test project." OFF)
+if (CppProtoNetwork_Test)
+	add_subdirectory(CppProtoNetwork_Test)
 endif ()
