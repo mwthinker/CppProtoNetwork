@@ -9,6 +9,8 @@ project(CppProtoNetwork_Example
 # Generated code for protobuf from *.proto files
 add_subdirectory(CppProtoNetwork_ExampleProtocol)
 
+find_package(fmt CONFIG REQUIRED)
+
 add_executable(CppProtoNetwork_Example
 	src/main.cpp
 )
@@ -17,12 +19,14 @@ target_link_libraries(CppProtoNetwork_Example
 	PRIVATE
 		CppProtoNetwork
 		CppProtoNetwork_ExampleProtocol
+		fmt::fmt-header-only
 )
 
 if (MSVC)
 	target_compile_options(CppProtoNetwork_Example
 		PRIVATE
 			"/permissive-"
+			"/wd4251" # 'identifier' : class 'type' needs to have dll-interface to be used by clients of class 'type2'
 	)
 endif ()
 

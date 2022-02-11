@@ -31,11 +31,11 @@ namespace net {
 		void setMessageSize(int messageSize);
 
 	private:
-		static constexpr int DEFAULT_MESSAGE_SIZE{512};
+		static constexpr int DefaultMessageSize = 1024;
 
 		mutable std::mutex mutex_;
 		std::queue<ProtobufMessage> buffer_;
-		int messageSize_{DEFAULT_MESSAGE_SIZE};
+		int messageSize_ = DefaultMessageSize;
 	};
 
 }

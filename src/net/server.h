@@ -5,7 +5,6 @@
 #include "remoteclient.h"
 #include "auxiliary.h"
 
-#include <memory>
 #include <atomic>
 
 namespace net {
@@ -21,15 +20,13 @@ namespace net {
 
 		static std::shared_ptr<Server> create(asio::io_context& ioContext);
 
-		void connect(unsigned short port);
+		void connect(int port);
 
-		void setDisconnectHandler(ServerDisconnectHandler&& disconnectHandler) {
-			disconnectHandler_ = disconnectHandler;
-		}
+		void setDisconnectHandler(ServerDisconnectHandler&& disconnectHandler);
 
 		void disconnect();
 
-		void setConnectHandler(const ServerConnectHandler& acceptionFunction);
+		void setConnectHandler(ServerConnectHandler&& acceptionFunction);
 
 		void sendToAll(const google::protobuf::MessageLite& message);
 
@@ -52,6 +49,9 @@ namespace net {
 
 		void doAccept();
 
+		void disconnectError(Error error);
+		void disconnectError(const asio::system_error& e);
+
 		asio::io_context& ioContext_;
 		ServerConnectHandler connectHandler_;
 		ServerDisconnectHandler disconnectHandler_;
@@ -59,10 +59,10 @@ namespace net {
 		asio::ip::tcp::acceptor acceptor_;
 		std::vector<RemoteClientPtr> clients_;
 
-		std::atomic<bool> active_{false};
-		std::atomic<bool> allowConnections_{false};
-		bool closeConnection_{false};
-		int port_{};
+		std::atomic_bool active_ = false;
+		std::atomic_bool allowConnections_ = false;
+		bool closeConnection_ = false;
+		asio::ip::port_type port_ = 0;
 	};
 
 }

@@ -1,6 +1,6 @@
 #include "server.h"
 
-using asio::ip::tcp;
+using tcp = asio::ip::tcp;
 
 namespace net {
 
@@ -17,10 +17,6 @@ namespace net {
 
 	}
 
-	std::shared_ptr<Server> Server::create(asio::io_context& ioContext) {
-		return std::shared_ptr<Server>(new Server{ioContext});
-	}
-
 	Server::Server(asio::io_context& ioContext)
 		: ioContext_{ioContext}
 		, socket_{ioContext}
@@ -33,23 +29,40 @@ namespace net {
 		disconnect();
 	}
 
-	void Server::connect(unsigned short port) {
-		asio::post(ioContext_, [this, port]() {
-			if (!active_ && port_ == 0 && !acceptor_.is_open()) {
-				active_ = true;
-				port_ = port;
-				try {
-					acceptor_ = asio::ip::tcp::acceptor{ioContext_, tcp::endpoint{tcp::v4(), port}, false};
-					allowConnections_ = true;
-				} catch (asio::system_error e) {
-					active_ = false;
-					if (disconnectHandler_) {
-						disconnectHandler_(e);
-					}
-					return;
-				}
+	std::shared_ptr<Server> Server::create(asio::io_context& ioContext) {
+		return std::shared_ptr<Server>(new Server{ioContext});
+	}
 
+	void Server::setDisconnectHandler(ServerDisconnectHandler&& disconnectHandler) {
+		disconnectHandler_ = disconnectHandler;
+	}
+
+	void Server::connect(int port) {
+		asio::post(ioContext_, [this, port]() {
+			if (active_) {
+				disconnectError(Error::InvalidPort);
+				return;
+			}
+
+			if (!isValidPort(port)) {
+				disconnectError(Error::InvalidPort);
+				return;
+			}
+
+			if (acceptor_.is_open()) {
+				return;
+			}
+
+			active_ = true;
+			port_ = static_cast<asio::ip::port_type>(port);
+			try {
+				acceptor_ = tcp::acceptor{ioContext_, tcp::endpoint{tcp::v4(), port_}, false};
+				allowConnections_ = true;
 				doAccept();
+			} catch (const asio::system_error& e) {
+				active_ = false;
+				disconnectError(e);
+				return;
 			}
 		});
 	}
@@ -57,26 +70,24 @@ namespace net {
 	void Server::disconnect() {
 		asio::post(ioContext_, [this]() {
 			if (active_) {
-				allowConnections_ = false;
-				for (auto& client : clients_) {
-					client->disconnect();
-				}
-				clients_.clear();
-				active_ = false;
+				return;
 			}
+			
+			allowConnections_ = false;
+			for (auto& client : clients_) {
+				client->disconnect();
+			}
+			clients_.clear();
+			active_ = false;
 		});
 	}
 
-	void Server::setConnectHandler(const ServerConnectHandler& acceptionFunction) {
-		if (!active_) {
-			connectHandler_ = acceptionFunction;
-		}
+	void Server::setConnectHandler(ServerConnectHandler&& acceptionFunction) {
+		connectHandler_ = acceptionFunction;
 	}
 
 	void Server::setAllowingNewConnections(bool allow) {
-		if (allow != allowConnections_) {
-			allowConnections_ = allow;
-		}
+		allowConnections_ = allow;
 	}
 
 	bool Server::isAllowingNewConnections() const {
@@ -101,7 +112,7 @@ namespace net {
 					keapAlive->connectHandler_(remoteClient);
 				}
 			} else {
-				auto socket = std::move(keapAlive->socket_);
+				tcp::socket socket = std::move(keapAlive->socket_); // Why??
 			}
 
 			if (!keapAlive->closeConnection_) {
@@ -112,6 +123,18 @@ namespace net {
 
 	void Server::removeClient(const RemoteClientPtr& client) {
 		removeFirstMatch<RemoteClientPtr>(clients_, client);
+	}
+
+	void Server::disconnectError(Error error) {
+		if (disconnectHandler_) {
+			disconnectHandler_(make_error_code(error));
+		}
+	}
+
+	void Server::disconnectError(const asio::system_error& error) {
+		if (disconnectHandler_) {
+			disconnectHandler_(error);
+		}
 	}
 
 }

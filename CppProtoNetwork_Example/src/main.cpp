@@ -5,24 +5,23 @@
 
 #include <message.pb.h>
 
-#include <iostream>
 #include <functional>
 #include <string>
+#include <fmt/format.h>
 
-using namespace net;
 using namespace std::chrono_literals;
 
-constexpr unsigned short PORT = 5013;
-const std::string LOCALHOST = "127.0.0.1";
+constexpr int Port = 5013;
+const std::string LocalHost = "127.0.0.1";
 
-constexpr unsigned short LAN_PORT = 32012;
+constexpr int LanPort = 32012;
 
-template <typename T>
-void repeatTimer(asio::steady_timer& timer, const std::chrono::seconds interval, T callback) {
+template <std::invocable T>
+void repeatTimer(asio::steady_timer& timer, std::chrono::seconds interval, T callback) {
 	timer.expires_after(interval);
 	timer.async_wait([&timer, interval, callback](const std::error_code& error) {
 		if (error) {
-			std::cout << "repeatTimer " << error.message() << "\n";
+			fmt::print("repeatTimer {}\n", error.message());
 			return;
 		}
 		callback();
@@ -34,51 +33,34 @@ void runServer() {
 	std::cout << "Start server\n";
 	asio::io_context ioContext;
 
-	auto server = Server::create(ioContext);
+	auto server = net::Server::create(ioContext);
 
-	auto connectHandler = [&](const RemoteClientPtr& remoteClientPtr) {
-		std::cout << "New Connection\n";
+	server->setConnectHandler([&](const net::RemoteClientPtr& remoteClientPtr) {
+		fmt::print("New Connection\n");
 
 		remoteClientPtr->setReceiveHandler<message::Wrapper>([](const message::Wrapper& wrapper, std::error_code ec) {
-			std::cout << "Received: " << wrapper.text() << std::endl;
+			fmt::print("Received: {}\n", wrapper.text());
 		});
 
 		remoteClientPtr->setDisconnectHandler([](std::error_code ec) {
-			std::cout << "Disconnected" << std::endl;
-		});
-	};
-
-	server->setConnectHandler(connectHandler);
-
-	server->setConnectHandler([&](const RemoteClientPtr& remoteClientPtr) {
-		std::cout << "New Connection\n";
-
-		remoteClientPtr->setReceiveHandler<message::Wrapper>([](const message::Wrapper& wrapper, std::error_code ec) {
-			std::cout << "Received: " << wrapper.text() << std::endl;
-		});
-
-		remoteClientPtr->setDisconnectHandler([](std::error_code ec) {
-			std::cout << "Disconnected" << std::endl;
+			fmt::print("Disconnected\n");
 		});
 	});
 
 	try {
-		server->connect(PORT);
+		server->connect(Port);
 	} catch (asio::system_error se) {
-		std::cout << se.what() << "\n";
+		fmt::print("{}\n", se.what());
 		return;
 	}
-
-	message::Wrapper wrapper;
+	
 	asio::steady_timer timer{ioContext};
 	int timerNbr = 0;
-	
 	repeatTimer(timer, 2s, [&timerNbr, &server]() {
-		std::stringstream stream;
-		stream << "Server DATA " << ++timerNbr << std::endl;
-		std::cout << "Send " << timerNbr <<" \n";
+		auto text = fmt::format("Server DATA {}\n", ++timerNbr);
+		fmt::print("Send {}\n", text);
 		message::Wrapper wrapper;
-		wrapper.set_text(stream.str());
+		wrapper.set_text(text);
 		server->sendToAll(wrapper);
 	});
 
@@ -86,44 +68,36 @@ void runServer() {
 }
 
 void runClient() {
-	std::cout << "Start client" << std::endl;
+	fmt::print("Start client\n");
 
 	asio::io_context ioContext;
-	auto client = Client::create(ioContext);
+	auto client = net::Client::create(ioContext);
 	bool connected = false;
 	client->setReceiveHandler<message::Wrapper>([](const message::Wrapper& message, std::error_code ec) {
-		std::cout << "Received: " << message.text() << std::endl;
+		fmt::print("Received: {}\n", message.text());
 	});
-
-
-	auto disconnectHandler = [&](std::error_code ec) {
-		connected = false;
-		std::cout << "Disconnected: " << ec.message() << std::endl;
-	};
-	client->setDisconnectHandler(disconnectHandler);
-
 	client->setDisconnectHandler([&](std::error_code ec) {
 		connected = false;
-		std::cout << "Disconnected: " << ec.message() << std::endl;
+		fmt::print("Disconnected: {}\n", ec.message());
 	});
 	client->setConnectHandler([&](std::error_code ec) {
 		if (ec) {
-			std::cout << ec.message() << std::endl;
+			fmt::print("{}\n", ec.message());
 			connected = false;
 		} else {
-			std::cout << "Connected" << std::endl;
+			fmt::print("Connected\n");
 			connected = true;
 		}
 	});
-	client->connect(LOCALHOST, PORT);
 
-	int timerNbr = 0;
+	client->connect(LocalHost, Port);
+	
 	asio::steady_timer timer{ioContext};
+	int timerNbr = 0;
 	repeatTimer(timer, 3s, [&timerNbr, &client]() {
-		std::stringstream stream;
-		stream << "Client DATA " << ++timerNbr;
+		auto text = fmt::format("Client DATA {}\n", ++timerNbr);
 		message::Wrapper wrapper;
-		wrapper.set_text(stream.str());
+		wrapper.set_text(text);
 		client->send(wrapper);
 	});
 
@@ -131,29 +105,23 @@ void runClient() {
 }
 
 void runServerLan() {
-	std::cout << "Start server lan" << std::endl;
+	fmt::print("Start server LAN\n");
 
 	asio::io_context ioContext;
-	LanUdpSender lanUdpSender{ioContext};
+	net::LanUdpSender lanUdpSender{ioContext};
 
 	bool disconnected = false;
 
-	std::function<void(std::error_code ec)> a = [&](std::error_code ec) {
-		disconnected = true;
-		std::cout << ec.message() << std::endl;
-	};
-	lanUdpSender.setDisconnectHandler(a);
-
 	lanUdpSender.setDisconnectHandler([&](std::error_code ec) {
 		disconnected = true;
-		std::cout << ec.message() << std::endl;
+		fmt::print("Disconnected: {}\n", ec.message());
 	});
 
 	message::Wrapper wrapper;
-	wrapper.set_text("hej");
+	wrapper.set_text("hello");
 	lanUdpSender.setMessage(wrapper);
 	
-	lanUdpSender.connect(LAN_PORT);
+	lanUdpSender.connect(LanPort);
 
 	while (!disconnected) {
 		ioContext.run_one();
@@ -161,23 +129,25 @@ void runServerLan() {
 }
 
 void runClientLan() {
-	std::cout << "Start client lan" << std::endl;
+	fmt::print("Start client LAN\n");
 
 	asio::io_context ioContext;
-	LanUdpReceiver lanUdpReceiver{ioContext};
+	net::LanUdpReceiver lanUdpReceiver{ioContext};
 
-	lanUdpReceiver.setReceiveHandler<message::Wrapper>([](const Meta& meta, const message::Wrapper& wrapper, std::error_code ec) {
-		std::cout << meta.endpoint_.address() << " | " << meta.endpoint_.port() << "\n";
-		std::cout << "Message: " << wrapper.text() << std::endl;
+	lanUdpReceiver.setReceiveHandler<message::Wrapper>([](const net::Meta& meta, const message::Wrapper& wrapper, std::error_code ec) {
+		fmt::print("{} | {}\n", meta.endpoint.address().to_string(), meta.endpoint.port());
+		fmt::print("Message: {}\n", wrapper.text());
 	});
 
-	lanUdpReceiver.connect(LAN_PORT);
+	lanUdpReceiver.connect(LanPort);
 	ioContext.run();
 }
 
 void testNetwork(int argc, const char* argv[]) {
 	if (argc > 1) {
-		if (strcmp(argv[1], "-s") == 0) {
+		if (strcmp(argv[1], "-h") == 0|| strcmp(argv[1], "--help") == 0) {
+			fmt::print("Test\n");
+		} else if (strcmp(argv[1], "-s") == 0) {
 			runServer();
 		} else if (strcmp(argv[1], "-c") == 0) {
 			runClient();

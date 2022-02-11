@@ -12,8 +12,7 @@ protobuf_generate_cpp(PROTO_SRC PROTO_HEADER ${PROTO_FILES})
 add_library(CppProtoNetwork_ExampleProtocol ${PROTO_HEADER} ${PROTO_SRC} ${PROTO_FILES})
 if (MSVC)
 	target_compile_options(CppProtoNetwork_ExampleProtocol
-		PUBLIC
-			"/wd4005" # 'identifier' : macro redefinition
+		PRIVATE
 			"/wd4251" # 'identifier' : class 'type' needs to have dll-interface to be used by clients of class 'type2'
 			"/wd4244" # An integer type is converted to a smaller integer type
 	)

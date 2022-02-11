@@ -1,8 +1,9 @@
 #ifndef CPPPROTONETWORK_NET_NET_PROTOBUFMESSAGE_H
 #define CPPPROTONETWORK_NET_NET_PROTOBUFMESSAGE_H
 
-#include <vector>
 #include <google/protobuf/message_lite.h>
+
+#include <vector>
 
 namespace net {
 
@@ -11,14 +12,6 @@ namespace net {
 		ProtobufMessage();
 
 		explicit ProtobufMessage(int size);
-
-		ProtobufMessage(const ProtobufMessage&) = default;
-
-		ProtobufMessage(ProtobufMessage&&) noexcept;
-
-		ProtobufMessage& operator=(const ProtobufMessage&) = default;
-
-		ProtobufMessage& operator=(ProtobufMessage&&) noexcept;
 
 		void clear();
 

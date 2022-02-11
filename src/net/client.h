@@ -20,15 +20,15 @@ namespace net {
 
 		static std::shared_ptr<Client> create(asio::io_context& ioContext);
 
-		void connect(const std::string& ip, unsigned short port);
+		void connect(const std::string& ip, int port);
 
 		void send(const google::protobuf::MessageLite& message);
 
 		void disconnect();
 
-		void setConnectHandler(const ConnectHandler& connectHandler);
+		void setConnectHandler(ConnectHandler&& connectHandler);
 
-		void setDisconnectHandler(const DisconnectHandler& disconnectHandler);
+		void setDisconnectHandler(DisconnectHandler&& disconnectHandler);
 
 		bool isActive() const {
 			return active_;
@@ -42,18 +42,18 @@ namespace net {
 
 		void close();
 
+		void connectError(Error error);
+		
 		asio::io_context& ioContext_;
 		detail::Connection connection_;
 		ConnectHandler connectHandler_;
-		std::atomic<bool> active_{false};
+		std::atomic_bool active_ = false;
 		std::mutex mutex_;
 	};
 
 	template <MessageLite Message>
 	void net::Client::setReceiveHandler(ReceiveHandler<Message>&& receiveHandler) {
-		if (!active_) {
-			connection_.setReceiveHandler<Message>(std::move(receiveHandler));
-		}
+		connection_.setReceiveHandler<Message>(std::move(receiveHandler));
 	}
 
 }

@@ -21,27 +21,35 @@ namespace net {
 		disconnect();
 	}
 
-	void Client::connect(const std::string& ip, unsigned short port) {
+	void Client::connect(const std::string& ip, int port) {
 		asio::post(ioContext_, [this, ip, port]() {
-			if (!active_) {
-				active_ = true;
-				std::vector<tcp::endpoint> endpointSequence{
-					tcp::endpoint{asio::ip::make_address_v4(ip), port}
-				};
-
-				asio::async_connect(connection_.getSocket(), endpointSequence,
-					[keapAlive = shared_from_this()](const std::error_code& ec, const tcp::endpoint& ep) {
-
-					if (keapAlive->connectHandler_) {
-						keapAlive->connectHandler_(ec);
-					}
-					if (ec) {
-						keapAlive->connection_.disconnect(ec);
-					} else {
-						keapAlive->connection_.readHeader();
-					}
-				});
+			if (active_) {
+				connectError(net::Error::AlreadyActive);
+				return;
 			}
+
+			if (!isValidPort(port)) {
+				connectError(net::Error::InvalidPort);
+				return;
+			}
+			
+			active_ = true;
+			std::vector<tcp::endpoint> endpointSequence{
+				tcp::endpoint{asio::ip::make_address_v4(ip), static_cast<asio::ip::port_type>(port)}
+			};
+
+			asio::async_connect(connection_.getSocket(), endpointSequence,
+				[keapAlive = shared_from_this()](const std::error_code& ec, const tcp::endpoint& ep) {
+
+				if (keapAlive->connectHandler_) {
+					keapAlive->connectHandler_(ec);
+				}
+				if (ec) {
+					keapAlive->connection_.disconnect(ec);
+				} else {
+					keapAlive->connection_.readHeader();
+				}
+			});
 		});
 	}
 
@@ -58,19 +66,15 @@ namespace net {
 		}
 	}
 
-	void Client::setConnectHandler(const ConnectHandler& connectHandler) {
-		if (!active_) {
-			connectHandler_ = connectHandler;
-		}
+	void Client::setConnectHandler(ConnectHandler&& connectHandler) {
+		connectHandler_ = connectHandler;
 	}
 
-	void Client::setDisconnectHandler(const DisconnectHandler& disconnectHandler) {
-		if (!active_) {
-			connection_.setDisconnectHandler([disconnectHandler = disconnectHandler, keapAlive = shared_from_this()](std::error_code ec) {
-				keapAlive->close();
-				disconnectHandler(ec);
-			});
-		}
+	void Client::setDisconnectHandler(DisconnectHandler&& disconnectHandler) {
+		connection_.setDisconnectHandler([disconnectHandler = disconnectHandler, keapAlive = shared_from_this()](std::error_code ec) {
+			keapAlive->close();
+			disconnectHandler(ec);
+		});
 	}
 
 	void Client::close() {
@@ -79,6 +83,12 @@ namespace net {
 
 	std::shared_ptr<Client> Client::create(asio::io_context& ioContext) {
 		return std::shared_ptr<Client>(new Client{ioContext});
+	}
+
+	void Client::connectError(Error error) {
+		if (connectHandler_) {
+			connectHandler_(make_error_code(net::Error::InvalidPort));
+		}
 	}
 
 }

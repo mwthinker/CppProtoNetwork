@@ -16,10 +16,7 @@ namespace net {
 
 		~LanUdpSender();
 		
-		template <typename Handler>
-		void setDisconnectHandler(Handler&& disconnectHandler) {
-			disconnectHandler_ = disconnectHandler;
-		}
+		void setDisconnectHandler(DisconnectHandler disconnectHandler);
 
 		void disconnect();
 

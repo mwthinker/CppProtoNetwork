@@ -16,6 +16,10 @@ namespace net {
 		disconnect();
 	}
 
+	void LanUdpSender::setDisconnectHandler(DisconnectHandler disconnectHandler) {
+		disconnectHandler_ = disconnectHandler;
+	}
+
 	void LanUdpSender::disconnect() {
 		if (active_) {
 			timer_.cancel();

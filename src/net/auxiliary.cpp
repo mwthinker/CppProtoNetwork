@@ -8,13 +8,11 @@ namespace net {
 
 	}
 
-	const char* ConnectionErrorCategory::name() const noexcept
-	{
+	const char* ConnectionErrorCategory::name() const noexcept {
 		return "connection";
 	}
 
-	std::string ConnectionErrorCategory::message(int ev) const
-	{
+	std::string ConnectionErrorCategory::message(int ev) const {
 		switch (static_cast<Error>(ev)) {
 			case Error::MessageMaxSize:
 				return "received message to big";
@@ -22,13 +20,15 @@ namespace net {
 				return "received message differs from received size";
 			case Error::ProtobufProtocolError:
 				return "protobuf protocol error";
-			default:
-				return "(unrecognized error)";
+			case Error::InvalidPort:
+				return "invalid port";
+			case Error::AlreadyActive:
+				return "already active";
 		}
+		return "(unrecognized error)";
 	}
 
-	std::error_code make_error_code(Error e)
-	{
+	std::error_code make_error_code(Error e) {
 		return {static_cast<int>(e), connectionErrorCategory};
 	}
 
