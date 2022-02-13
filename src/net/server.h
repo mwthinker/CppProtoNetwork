@@ -4,10 +4,26 @@
 #include "protobufmessage.h"
 #include "remoteclient.h"
 #include "auxiliary.h"
+#include "iocontext.h"
 
 #include <atomic>
 
 namespace net {
+
+	class NetFunctions {
+	public:
+		virtual void post() = 0;
+
+	};
+
+	class TcpSocket {
+
+	};
+
+	class TcpAcceptor {
+	public:
+		virtual void asyncAccept() = 0;
+	};
 
 	using RemoteClientPtr = std::shared_ptr<RemoteClient>;
 	using ServerConnectHandler = std::function<void(const RemoteClientPtr& remoteClientPtr)>;
@@ -18,7 +34,7 @@ namespace net {
 
 		~Server();
 
-		static std::shared_ptr<Server> create(asio::io_context& ioContext);
+		static std::shared_ptr<Server> create(IoContext& ioContext);
 
 		void connect(int port);
 
@@ -43,7 +59,7 @@ namespace net {
 		}
 		
 	private:
-		Server(asio::io_context& ioContext);
+		Server(IoContext& ioContext);
 
 		void removeClient(const RemoteClientPtr& client);
 

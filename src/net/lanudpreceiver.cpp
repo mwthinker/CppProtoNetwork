@@ -2,9 +2,9 @@
 
 namespace net {
 
-	LanUdpReceiver::LanUdpReceiver(asio::io_context& ioContext, int maxSize)
-		: ioContext_{ioContext}
-		, socket_{ioContext}
+	LanUdpReceiver::LanUdpReceiver(IoContext& ioContext, int maxSize)
+		: ioContext_{ioContext.ioContext_}
+		, socket_{ioContext_}
 		, maxSize_{maxSize}
 		, recvBuffer_{maxSize} {
 

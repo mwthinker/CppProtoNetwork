@@ -9,13 +9,9 @@
 
 namespace net {
 
-	class Server;
-
 	class RemoteClient;
 	class RemoteClient : public std::enable_shared_from_this<RemoteClient> {
 	public:
-		static std::shared_ptr<RemoteClient> create(asio::ip::tcp::socket socket, std::shared_ptr<Server> server);
-
 		void send(const google::protobuf::MessageLite& message);
 
 		void disconnect();
@@ -26,6 +22,8 @@ namespace net {
 		void setReceiveHandler(ReceiveHandler<Message>&& receiveHandler);
 
 	private:
+		friend class Server;
+
 		RemoteClient(asio::ip::tcp::socket socket, std::shared_ptr<Server> server);
 		
 		detail::Connection connection_;

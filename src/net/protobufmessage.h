@@ -7,6 +7,11 @@
 
 namespace net {
 
+	class ReceiveMessage {
+	public:
+
+	};
+
 	class ProtobufMessage {
 	public:
 		ProtobufMessage();

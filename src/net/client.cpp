@@ -10,8 +10,8 @@ using asio::ip::tcp;
 
 namespace net {
 
-	Client::Client(asio::io_context& ioContext)
-		: ioContext_{ioContext}
+	Client::Client(IoContext& ioCOntext)
+		: ioContext_{ioCOntext.ioContext_}
 		, connection_{asio::ip::tcp::socket{ioContext_}} {
 		
 		GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -81,7 +81,7 @@ namespace net {
 		active_ = false;
 	}
 
-	std::shared_ptr<Client> Client::create(asio::io_context& ioContext) {
+	std::shared_ptr<Client> Client::create(IoContext& ioContext) {
 		return std::shared_ptr<Client>(new Client{ioContext});
 	}
 

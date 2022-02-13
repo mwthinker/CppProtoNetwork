@@ -5,10 +5,6 @@
 
 namespace net {
 
-	std::shared_ptr<RemoteClient> RemoteClient::create(asio::ip::tcp::socket socket, std::shared_ptr<Server> server) {
-		return std::shared_ptr<RemoteClient>(new RemoteClient{std::move(socket), server});
-	}
-
 	RemoteClient::RemoteClient(asio::ip::tcp::socket socket, std::shared_ptr<Server> server)
 		: connection_{std::move(socket)}, server_{server} {
 		

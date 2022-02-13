@@ -5,6 +5,7 @@
 #include "auxiliary.h"
 
 #include "detail/connection.h"
+#include "iocontext.h"
 
 #include <functional>
 
@@ -12,7 +13,7 @@ namespace net {
 
 	class LanUdpSender {
 	public:
-		LanUdpSender(asio::io_context& ioContext, int maxSize = 1024);
+		LanUdpSender(IoContext& ioContext, int maxSize = 1024);
 
 		~LanUdpSender();
 		

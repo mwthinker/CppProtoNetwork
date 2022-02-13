@@ -1,5 +1,6 @@
 #include <net/server.h>
 #include <net/client.h>
+#include <net/timer.h>
 #include <net/lanudpsender.h>
 #include <net/lanudpreceiver.h>
 
@@ -17,9 +18,9 @@ const std::string LocalHost = "127.0.0.1";
 constexpr int LanPort = 32012;
 
 template <std::invocable T>
-void repeatTimer(asio::steady_timer& timer, std::chrono::seconds interval, T callback) {
-	timer.expires_after(interval);
-	timer.async_wait([&timer, interval, callback](const std::error_code& error) {
+void repeatTimer(net::Timer& timer, std::chrono::seconds interval, T callback) {
+	timer.expiresAfter(interval);
+	timer.asyncWait([&timer, interval, callback](const std::error_code& error) {
 		if (error) {
 			fmt::print("repeatTimer {}\n", error.message());
 			return;
@@ -31,7 +32,7 @@ void repeatTimer(asio::steady_timer& timer, std::chrono::seconds interval, T cal
 
 void runServer() {
 	std::cout << "Start server\n";
-	asio::io_context ioContext;
+	net::IoContext ioContext;
 
 	auto server = net::Server::create(ioContext);
 
@@ -54,7 +55,7 @@ void runServer() {
 		return;
 	}
 	
-	asio::steady_timer timer{ioContext};
+	net::Timer timer{ioContext};
 	int timerNbr = 0;
 	repeatTimer(timer, 2s, [&timerNbr, &server]() {
 		auto text = fmt::format("Server DATA {}\n", ++timerNbr);
@@ -70,7 +71,8 @@ void runServer() {
 void runClient() {
 	fmt::print("Start client\n");
 
-	asio::io_context ioContext;
+	net::IoContext ioContext;
+
 	auto client = net::Client::create(ioContext);
 	bool connected = false;
 	client->setReceiveHandler<message::Wrapper>([](const message::Wrapper& message, std::error_code ec) {
@@ -92,7 +94,7 @@ void runClient() {
 
 	client->connect(LocalHost, Port);
 	
-	asio::steady_timer timer{ioContext};
+	net::Timer timer{ioContext};
 	int timerNbr = 0;
 	repeatTimer(timer, 3s, [&timerNbr, &client]() {
 		auto text = fmt::format("Client DATA {}\n", ++timerNbr);
@@ -107,7 +109,7 @@ void runClient() {
 void runServerLan() {
 	fmt::print("Start server LAN\n");
 
-	asio::io_context ioContext;
+	net::IoContext ioContext;
 	net::LanUdpSender lanUdpSender{ioContext};
 
 	bool disconnected = false;
@@ -124,14 +126,14 @@ void runServerLan() {
 	lanUdpSender.connect(LanPort);
 
 	while (!disconnected) {
-		ioContext.run_one();
+		ioContext.runOne();
 	}
 }
 
 void runClientLan() {
 	fmt::print("Start client LAN\n");
 
-	asio::io_context ioContext;
+	net::IoContext ioContext;
 	net::LanUdpReceiver lanUdpReceiver{ioContext};
 
 	lanUdpReceiver.setReceiveHandler<message::Wrapper>([](const net::Meta& meta, const message::Wrapper& wrapper, std::error_code ec) {

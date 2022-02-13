@@ -3,6 +3,7 @@
 
 #include "protobufmessage.h"
 #include "auxiliary.h"
+#include "iocontext.h"
 
 #include "detail/connection.h"
 
@@ -13,7 +14,7 @@ namespace net {
 
 	class LanUdpReceiver {
 	public:
-		LanUdpReceiver(asio::io_context& ioContext, int maxSize = 1024);
+		LanUdpReceiver(IoContext& ioContext, int maxSize = 1024);
 
 		~LanUdpReceiver();
 

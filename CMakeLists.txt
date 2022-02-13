@@ -14,6 +14,8 @@ add_library(CppProtoNetwork
 	src/net/auxiliary.h
 	src/net/client.cpp
 	src/net/client.h
+	src/net/iocontext.cpp
+	src/net/iocontext.h
 	src/net/lanudpreceiver.cpp
 	src/net/lanudpreceiver.h
 	src/net/lanudpsender.cpp
@@ -26,6 +28,8 @@ add_library(CppProtoNetwork
 	src/net/remoteclient.h
 	src/net/server.cpp
 	src/net/server.h
+	src/net/timer.cpp
+	src/net/timer.h
 
 	vcpkg.json
 )

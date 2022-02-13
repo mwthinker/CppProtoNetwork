@@ -17,10 +17,10 @@ namespace net {
 
 	}
 
-	Server::Server(asio::io_context& ioContext)
-		: ioContext_{ioContext}
-		, socket_{ioContext}
-		, acceptor_{ioContext} {
+	Server::Server(IoContext& ioContext)
+		: ioContext_{ioContext.ioContext_}
+		, socket_{ioContext_}
+		, acceptor_{ioContext_} {
 		
 		GOOGLE_PROTOBUF_VERIFY_VERSION;
 	}
@@ -29,7 +29,7 @@ namespace net {
 		disconnect();
 	}
 
-	std::shared_ptr<Server> Server::create(asio::io_context& ioContext) {
+	std::shared_ptr<Server> Server::create(IoContext& ioContext) {
 		return std::shared_ptr<Server>(new Server{ioContext});
 	}
 
@@ -105,7 +105,8 @@ namespace net {
 	void Server::doAccept() {
 		acceptor_.async_accept(socket_, [keapAlive = shared_from_this()](std::error_code ec) {
 			if (!ec && keapAlive->allowConnections_) {
-				auto remoteClient = RemoteClient::create(std::move(keapAlive->socket_), keapAlive);
+				auto remoteClient = std::shared_ptr<RemoteClient>(new RemoteClient(std::move(keapAlive->socket_), keapAlive));
+				
 				keapAlive->clients_.push_back(remoteClient);
 
 				if (keapAlive->connectHandler_) {

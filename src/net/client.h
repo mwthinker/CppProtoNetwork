@@ -4,6 +4,7 @@
 #include "protobufmessage.h"
 
 #include "detail/connection.h"
+#include "iocontext.h"
 
 #include <asio.hpp>
 #include <google/protobuf/message_lite.h>
@@ -18,7 +19,7 @@ namespace net {
 	public:
 		~Client();
 
-		static std::shared_ptr<Client> create(asio::io_context& ioContext);
+		static std::shared_ptr<Client> create(IoContext& ioContext);
 
 		void connect(const std::string& ip, int port);
 
@@ -38,7 +39,7 @@ namespace net {
 		void setReceiveHandler(ReceiveHandler<Message>&& receiveHandler);
 
 	private:
-		Client(asio::io_context& ioContext_);
+		Client(IoContext& ioContext);
 
 		void close();
 

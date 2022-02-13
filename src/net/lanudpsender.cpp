@@ -4,12 +4,12 @@ using namespace std::chrono_literals;
 
 namespace net {
 
-	LanUdpSender::LanUdpSender(asio::io_context& ioContext, int maxSize)
-		: ioContext_{ioContext}
-		, socket_{ioContext}
+	LanUdpSender::LanUdpSender(IoContext& ioContext, int maxSize)
+		: ioContext_{ioContext.ioContext_}
+		, socket_{ioContext_}
 		, protobufMessage_{maxSize}
 		, maxSize_{maxSize}
-		, timer_{ioContext} {
+		, timer_{ioContext_} {
 	}
 
 	LanUdpSender::~LanUdpSender() {
