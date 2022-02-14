@@ -16,11 +16,9 @@ namespace net {
 	public:
 		LanUdpReceiver(IoContext& ioContext, int maxSize = 1024);
 
-		~LanUdpReceiver();
-
 		void setDisconnectHandler(DisconnectHandler&& disconnectHandler);
 
-		void connect(unsigned short port);
+		void connect(int port);
 
 		template <MessageLite Message>
 		void setReceiveHandler(LanReceiveHandler<Message>&& receiveHandler);
@@ -37,6 +35,8 @@ namespace net {
 		void callReceivHandler(const Meta& meta, const ProtobufMessage& protobufMessage, const std::error_code& ec) const;
 
 		void callHandle(const std::error_code& ec = {});
+
+		void callHandle(Error error);
 
 		asio::io_context& ioContext_;
 		asio::ip::udp::endpoint remoteEndpoint_;

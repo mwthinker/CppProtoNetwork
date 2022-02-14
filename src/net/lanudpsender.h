@@ -25,12 +25,14 @@ namespace net {
 
 		void setMessage(const google::protobuf::MessageLite& message);
 
-		void connect(unsigned short port);
+		void connect(int port);
 
 	private:
 		void broadCast(std::system_error se);
 
 		void callHandle(const std::error_code& ec = {});
+
+		void callHandle(Error error);
 
 		asio::io_context& ioContext_;
 		asio::ip::udp::endpoint remoteEndpoint_;

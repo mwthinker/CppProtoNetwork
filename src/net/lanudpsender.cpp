@@ -37,16 +37,26 @@ namespace net {
 		protobufMessage_.setBuffer(message);
 	}
 
-	void LanUdpSender::connect(unsigned short port) {
+	void LanUdpSender::connect(int port) {
 		if (active_) {
 			return;
 		}
 		asio::post(ioContext_, [&]() {
-			remoteEndpoint_ = {asio::ip::address_v4::broadcast(), port};
+			if (active_) {
+				callHandle(net::Error::AlreadyActive);
+				return;
+			}
+
+			if (!isValidPort(port)) {
+				callHandle(net::Error::InvalidPort);
+				return;
+			}
+
+			remoteEndpoint_ = {asio::ip::address_v4::broadcast(), static_cast<asio::ip::port_type>(port)};
 
 			std::error_code ec;
 			socket_.open(remoteEndpoint_.protocol(), ec);
-			if (ec) {				
+			if (ec) {
 				callHandle(ec);
 			}
 			socket_.set_option(asio::socket_base::reuse_address{true}, ec);
@@ -88,6 +98,10 @@ namespace net {
 		if (disconnectHandler_) {
 			disconnectHandler_(ec);
 		}
+	}
+
+	void LanUdpSender::callHandle(Error error) {
+		callHandle(make_error_code(net::Error::InvalidPort));
 	}
 
 }

@@ -10,20 +10,23 @@ namespace net {
 
 	}
 
-	LanUdpReceiver::~LanUdpReceiver() {
-	}
-
 	void LanUdpReceiver::setDisconnectHandler(DisconnectHandler&& disconnectHandler) {
 		disconnectHandler_ = std::move(disconnectHandler);
 	}
 
-	void LanUdpReceiver::connect(unsigned short port) {
-		if (active_) {
-			return;
-		}
-
+	void LanUdpReceiver::connect(int port) {
 		asio::post(ioContext_, [&]() {
-			remoteEndpoint_ = {asio::ip::address_v4::any(), port};
+			if (active_) {
+				callHandle(net::Error::AlreadyActive);
+				return;
+			}
+
+			if (!isValidPort(port)) {
+				callHandle(net::Error::InvalidPort);
+				return;
+			}
+
+			remoteEndpoint_ = {asio::ip::address_v4::any(), static_cast<asio::ip::port_type>(port)};
 
 			std::error_code ec;
 			socket_.open(remoteEndpoint_.protocol(), ec);
@@ -93,6 +96,10 @@ namespace net {
 		if (disconnectHandler_) {
 			disconnectHandler_(ec);
 		}
+	}
+
+	void LanUdpReceiver::callHandle(Error error) {
+		callHandle(make_error_code(net::Error::InvalidPort));
 	}
 
 }
