@@ -39,21 +39,24 @@ void runServer() {
 	server->setConnectHandler([&](const net::RemoteClientPtr& remoteClientPtr) {
 		fmt::print("New Connection\n");
 
-		remoteClientPtr->setReceiveHandler<message::Wrapper>([](const message::Wrapper& wrapper, std::error_code ec) {
+		remoteClientPtr->setReceiveHandler<message::Wrapper>([](const message::Wrapper& wrapper, const std::error_code& ec) {
+			if (ec) {
+				fmt::print("{}\n", ec.message());
+			}
+
 			fmt::print("Received: {}\n", wrapper.text());
 		});
 
-		remoteClientPtr->setDisconnectHandler([](std::error_code ec) {
+		remoteClientPtr->setDisconnectHandler([](const std::error_code& ec) {
+			if (ec) {
+				fmt::print("{}\n", ec.message());
+			}
+
 			fmt::print("Disconnected\n");
 		});
 	});
 
-	try {
-		server->connect(Port);
-	} catch (asio::system_error se) {
-		fmt::print("{}\n", se.what());
-		return;
-	}
+	server->connect(Port);
 	
 	net::Timer timer{ioContext};
 	int timerNbr = 0;
@@ -75,7 +78,11 @@ void runClient() {
 
 	auto client = net::Client::create(ioContext);
 	bool connected = false;
-	client->setReceiveHandler<message::Wrapper>([](const message::Wrapper& message, std::error_code ec) {
+	client->setReceiveHandler<message::Wrapper>([](const message::Wrapper& message, const std::error_code& ec) {
+		if (ec) {
+			fmt::print("{}\n", ec.message());
+		}
+
 		fmt::print("Received: {}\n", message.text());
 	});
 	client->setDisconnectHandler([&](std::error_code ec) {
@@ -114,7 +121,11 @@ void runServerLan() {
 
 	bool disconnected = false;
 
-	lanUdpSender.setDisconnectHandler([&](std::error_code ec) {
+	lanUdpSender.setDisconnectHandler([&](const std::error_code& ec) {
+		if (ec) {
+			fmt::print("{}\n", ec.message());
+		}
+
 		disconnected = true;
 		fmt::print("Disconnected: {}\n", ec.message());
 	});
@@ -137,6 +148,10 @@ void runClientLan() {
 	net::LanUdpReceiver lanUdpReceiver{ioContext};
 
 	lanUdpReceiver.setReceiveHandler<message::Wrapper>([](const net::Meta& meta, const message::Wrapper& wrapper, std::error_code ec) {
+		if (ec) {
+			fmt::print("{}\n", ec.message());
+		}
+		
 		fmt::print("{} | {}\n", meta.endpoint.address().to_string(), meta.endpoint.port());
 		fmt::print("Message: {}\n", wrapper.text());
 	});
