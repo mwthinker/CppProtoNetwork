@@ -82,7 +82,7 @@ namespace net::detail {
 			});
 	}
 
-	void Connection::disconnect(std::error_code ec) {
+	void Connection::disconnect(const std::error_code& ec) {
 		socket_.close();
 		
 		if (disconnectHandler_) {

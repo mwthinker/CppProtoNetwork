@@ -18,9 +18,8 @@ namespace net::detail {
 
 		template <MessageLite Message>
 		void setReceiveHandler(ReceiveHandler<Message>&& messageHandler) {
-			Message protocolMessage;
-			receiveHandler_ = [protocolMessage, messageHandler = std::move(messageHandler)]
-			(const net::ProtobufMessage& message, std::error_code ec) mutable {
+			receiveHandler_ = [protocolMessage = Message{}, messageHandler = std::move(messageHandler)]
+			(const net::ProtobufMessage& message, const std::error_code& ec) mutable {
 				protocolMessage.Clear();
 				if (ec) {
 					messageHandler(protocolMessage, ec);
@@ -39,14 +38,14 @@ namespace net::detail {
 
 		void readHeader();
 
-		void disconnect(std::error_code ec);
+		void disconnect(const std::error_code& ec);
 
 		asio::ip::tcp::socket& getSocket() {
 			return socket_;
 		}
 
 	private:
-		using InternalReceiveHandler = std::function<void(const ProtobufMessage& message, std::error_code ec)>;
+		using InternalReceiveHandler = std::function<void(const ProtobufMessage& message, const std::error_code& ec)>;
 
 		asio::ip::tcp::socket socket_;
 
