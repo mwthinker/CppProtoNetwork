@@ -11,7 +11,7 @@
 namespace net {
 
 	using RemoteClientPtr = std::shared_ptr<RemoteClient>;
-	using ServerConnectHandler = std::function<void(const RemoteClientPtr& remoteClientPtr)>;
+	using ServerConnectHandler = std::function<void(RemoteClientPtr remoteClientPtr)>;
 
 	class Server : public std::enable_shared_from_this<Server> {
 	public:

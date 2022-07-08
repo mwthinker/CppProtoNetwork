@@ -10,11 +10,11 @@ It uses C++20 and the C++ standard library.
 * [vcpkg](https://github.com/microsoft/vcpkg)
 
 ### vcpkg
-Either define CMAKE_TOOLCHAIN_FILE in cmake to use the one provided by vcpkg or define a enviromental variable VCPKG_ROOT to the vcpkg install directory.
+Either define CMAKE_TOOLCHAIN_FILE in cmake to use the one provided by vcpkg or define a enviromental variable VCPKG_ROOT to the vcpkg install directory. Or create a CMakeUserPresets.json and use that one.
 
 Install following packages:
 ```
-# Inside project dir (assuming in a unix host)
+# Inside project dir (assuming unix host)
 mkdir build
 cmake --preset=unix ..
 ```
@@ -38,16 +38,20 @@ message Wrapper {
 #include <net/server.h>
 #include <message.pb.h> // Generated code by protobuf.
 
+net::IoContext ioContext;
+
 // Some code ...
 
-auto server = Server::create();
+auto server = Server::create(ioContext);
 // Must setup connections handlers before server is connected.
 // Data is called from the server's internal thread, data Therefore need to be
 // protected.
-server->setConnectHandler([](const RemoteClientPtr& remoteClientPtr) {
-    std::cout << "New Connection\n";	
+server->setConnectHandler([](RemoteClientPtr remoteClientPtr) {
+    std::cout << "New Connection\n";
 
-    remoteClientPtr->setReceiveHandler<message::Wrapper>([](const message::Wrapper& wrapper, std::error_code ec) {
+    remoteClientPtr->setReceiveHandler<message::Wrapper>(
+        [](const message::Wrapper& wrapper, std::error_code ec) {
+        
         std::cout << wrapper.text() << "\n";
     });
 
@@ -59,12 +63,7 @@ server->setConnectHandler([](const RemoteClientPtr& remoteClientPtr) {
 // Some code ...
 
 // Start listening to incomming connections on port 5012
-try {
-    server->connect(5012);
-} catch (asio::system_error se) {
-    std::cout << se.what() << "\n";
-    return;
-}
+server->connect(5012);
 
 // Some code ...
 
@@ -75,15 +74,18 @@ wrapper.set_text("Hellor world");
 // Send to all conencted clients.
 server->sendToAll(wrapper);
 
-// Some code ...
+// Start running, blocks everything.
+ioContext.run();
 
+// ...
+
+// Some code to send data to a specific client
 void sendToSpecificClient(RemoteClientPtr remoteClientPtr) {
     message::Wrapper wrapper;
     wrapper.set_text("Hello remote client!");
 
     remoteClientPtr->send(wrapper);
 }
-
 ```
 
 ### Client code
@@ -94,13 +96,17 @@ void sendToSpecificClient(RemoteClientPtr remoteClientPtr) {
 
 // Some code ...
 
-auto client = Client::create();
+net::IoContext ioContext;
+
+auto client = Client::create(ioContext);
 // Must setup connections handlers before client is connected.
 // Data is called from the clients's internal thread, data Therefore need to be
 // protected.
-client->setReceiveHandler<message::Wrapper>([](const message::Wrapper& message, std::error_code ec) {
-    std::cout << message.text() << "\n";
-});
+client->setReceiveHandler<message::Wrapper>(
+    [](const message::Wrapper& message, std::error_code ec) {
+        std::cout << message.text() << "\n";
+    }
+);
 
 client->setConnectHandler([](std::error_code ec) {
     if (ec) {
@@ -110,7 +116,7 @@ client->setConnectHandler([](std::error_code ec) {
     }
 });
 
-client->setDisconnectHandler([](std::error_code ec) {	
+client->setDisconnectHandler([](std::error_code ec) {
     std::cout << "Disconnected: " << ec.message() << "\n";
 });
 
@@ -127,6 +133,10 @@ wrapper.set_text("Hellor world");
 
 // Send to server
 client->send(wrapper);
+
+// Start running, blocks everything.
+ioContext.run();
+
 
 ```
 

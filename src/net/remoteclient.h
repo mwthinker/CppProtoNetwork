@@ -9,7 +9,7 @@
 
 namespace net {
 
-	class RemoteClient;
+	class Server;
 	class RemoteClient : public std::enable_shared_from_this<RemoteClient> {
 	public:
 		void send(const google::protobuf::MessageLite& message);

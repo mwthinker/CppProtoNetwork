@@ -5,9 +5,6 @@
 
 namespace net {
 
-	class IoContext;
-	using IoContextPtr = std::shared_ptr<IoContext>;
-
 	class IoContext {
 	public:
 		IoContext() = default;
