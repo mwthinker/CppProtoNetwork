@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.23)
 project(CppProtoNetwork
 	DESCRIPTION
 		"C++ Server/Client library using ASIO and protobuf"
@@ -6,7 +6,7 @@ project(CppProtoNetwork
 		CXX
 )
 
-add_library(CppProtoNetwork
+set(SOURCES
 	src/net/detail/connection.cpp
 	src/net/detail/connection.h
 	
@@ -32,6 +32,15 @@ add_library(CppProtoNetwork
 	src/net/timer.h
 
 	vcpkg.json
+)
+
+add_library(CppProtoNetwork ${SOURCES})
+
+set_property(GLOBAL PROPERTY USE_FOLDERS On)
+source_group(TREE
+	${CMAKE_CURRENT_SOURCE_DIR}
+	FILES
+		${SOURCES}
 )
 
 find_package(asio CONFIG REQUIRED)

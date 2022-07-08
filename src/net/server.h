@@ -10,21 +10,6 @@
 
 namespace net {
 
-	class NetFunctions {
-	public:
-		virtual void post() = 0;
-
-	};
-
-	class TcpSocket {
-
-	};
-
-	class TcpAcceptor {
-	public:
-		virtual void asyncAccept() = 0;
-	};
-
 	using RemoteClientPtr = std::shared_ptr<RemoteClient>;
 	using ServerConnectHandler = std::function<void(const RemoteClientPtr& remoteClientPtr)>;
 
@@ -45,10 +30,6 @@ namespace net {
 		void setConnectHandler(ServerConnectHandler&& acceptionFunction);
 
 		void sendToAll(const google::protobuf::MessageLite& message);
-
-		const std::vector<RemoteClientPtr>& getClients() const {
-			return clients_;
-		}
 
 		void setAllowingNewConnections(bool allow);
 

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.23)
 project(CppProtoNetwork_Test
 	DESCRIPTION
 		"Test the project CppProtoNetwork_Test using google test"
@@ -38,10 +38,7 @@ if (GTest_FOUND)
 	)
 	
 	include(GoogleTest)
-	gtest_discover_tests(CppProtoNetwork_Test
-		#WORKING_DIRECTORY "src/"
-	)
-	#add_test(NAME example_test COMMAND example)
+	gtest_discover_tests(CppProtoNetwork_Test)
 
 else (GTest_FOUND)
 	message(STATUS "GTest not found, CppProtoNetwork_Test not created")

@@ -1,17 +1,15 @@
-CppProtoNetwork
-======
-# About
+# net::CppProtoNetwork [![CI build](https://github.com/mwthinker/CppProtoNetwork/actions/workflows/ci.yml/badge.svg)](https://github.com/mwthinker/CppProtoNetwork/actions/workflows/ci.yml)
+## About
 A network library using TCP sockets. Handles server and clients. Uses standalone [Asio](https://think-async.com/Asio/) (no boost) library. Data is serialized using [Protobuf](https://developers.google.com/protocol-buffers/).
 
 It uses C++20 and the C++ standard library.
 
-# Requirements
-
+## Requirements
 * [CMake](https://cmake.org/)
 * C++20 compliant compiler
 * [vcpkg](https://github.com/microsoft/vcpkg)
 
-## vcpkg
+### vcpkg
 Either define CMAKE_TOOLCHAIN_FILE in cmake to use the one provided by vcpkg or define a enviromental variable VCPKG_ROOT to the vcpkg install directory.
 
 Install following packages:
@@ -21,8 +19,8 @@ mkdir build
 cmake --preset=unix ..
 ```
 
-# Example code
-## Proto file
+## Example code
+### Proto file
 
 ```c
 syntax = "proto3";
@@ -34,7 +32,7 @@ message Wrapper {
 }
 ```
 
-## Server code
+### Server code
 
 ```C++
 #include <net/server.h>
@@ -88,7 +86,7 @@ void sendToSpecificClient(RemoteClientPtr remoteClientPtr) {
 
 ```
 
-## Client code
+### Client code
 
 ```C++
 #include <net/client.h>
@@ -132,6 +130,5 @@ client->send(wrapper);
 
 ```
 
-Open source
-======
+## Open source
 The project is under the MIT license (see LICENSE.md).

@@ -23,6 +23,7 @@
 /build*
 /linuxBuild
 external/
+.vscode/
 
 #################
 ## Eclipse
