@@ -40,7 +40,7 @@ namespace net {
 		}
 		
 	private:
-		Server(IoContext& ioContext);
+		explicit Server(IoContext& ioContext);
 
 		void removeClient(const RemoteClientPtr& client);
 

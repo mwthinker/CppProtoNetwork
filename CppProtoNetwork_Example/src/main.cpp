@@ -31,7 +31,7 @@ void repeatTimer(net::Timer& timer, std::chrono::seconds interval, T callback) {
 }
 
 void runServer() {
-	std::cout << "Start server\n";
+	fmt::print("Start server\n");
 	net::IoContext ioContext;
 
 	auto server = net::Server::create(ioContext);

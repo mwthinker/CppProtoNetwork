@@ -39,7 +39,7 @@ namespace net {
 		void setReceiveHandler(ReceiveHandler<Message>&& receiveHandler);
 
 	private:
-		Client(IoContext& ioContext);
+		explicit Client(IoContext& ioContext);
 
 		void close();
 
