@@ -23,10 +23,10 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v3
 
-      - name: Set C++/C compiler on macOs
+      - name: Set C++/C compiler on macOS
         shell: bash
         run: echo "CC=gcc-11" >> $GITHUB_ENV; echo "CXX=g++-11" >> $GITHUB_ENV; cat "$GITHUB_ENV"
-        if: runner.os == 'macOs'
+        if: runner.os == 'macOS'
 
       - uses: friendlyanon/setup-vcpkg@v1
         with:
