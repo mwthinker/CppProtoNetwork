@@ -1,4 +1,3 @@
-cmake_minimum_required(VERSION 3.23)
 project(CppProtoNetwork_Example
 	DESCRIPTION
 		"A example of using the CppProtoNetwork_Example library"

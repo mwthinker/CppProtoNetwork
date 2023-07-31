@@ -1,4 +1,3 @@
-cmake_minimum_required(VERSION 3.23)
 project(CppProtoNetwork_Test
 	DESCRIPTION
 		"Test the project CppProtoNetwork_Test using google test"
