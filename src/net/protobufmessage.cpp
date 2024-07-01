@@ -4,7 +4,7 @@ namespace net {
 
 	namespace {
 		
-		constexpr int decodeMessageSize(char byte1, char byte2) {
+		constexpr int decodeMessageSize(unsigned char byte1, unsigned char byte2) {
 			return byte1 * 256 + byte2;
 		}
 

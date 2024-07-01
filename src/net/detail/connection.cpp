@@ -31,7 +31,7 @@ namespace net::detail {
 		sendBuffer_.acquire(protobufMessage);
 		protobufMessage.setBuffer(message);
 
-		const char* data = protobufMessage.getData();
+		const unsigned char* data = protobufMessage.getData();
 		int size = protobufMessage.getSize();
 		asio::async_write(socket_, asio::buffer(data, size), asio::transfer_exactly(size),
 			[this, pb = std::move(protobufMessage)](std::error_code ec, std::size_t length) mutable {

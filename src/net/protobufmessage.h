@@ -36,19 +36,19 @@ namespace net {
 
 		int getBodySize() const;
 
-		const char* getData() const {
+		unsigned const char* getData() const {
 			return buffer_.data();
 		}
 
-		char* getData() {
+		unsigned char* getData() {
 			return buffer_.data();
 		}
 
-		const char* getBodyData() const {
+		unsigned const char* getBodyData() const {
 			return buffer_.data() + getHeaderSize();
 		}
 
-		char* getBodyData() {
+		unsigned char* getBodyData() {
 			return buffer_.data() + getHeaderSize();
 		}
 
@@ -57,7 +57,7 @@ namespace net {
 
 		void defineBodySize();
 
-		std::vector<char> buffer_;
+		std::vector<unsigned char> buffer_;
 	};
 
 }
